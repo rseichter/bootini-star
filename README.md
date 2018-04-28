@@ -80,7 +80,14 @@ initialise the database:
 flask db upgrade
 ```
 
-This will create the necessary DB tables.
+This will create the necessary DB tables. BS also requires some static data,
+which you can load into PostgreSQL as follows, assuming you named your local
+database 'bs'.
+
+```shell
+cd db-static
+./db-helper bs load
+```
 
 ## Why is there no complete default configuration?
 
