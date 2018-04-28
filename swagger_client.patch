@@ -1,0 +1,60 @@
+diff -ru a/swagger_client/models/get_fw_leaderboards_characters_victory_points.py b/swagger_client/models/get_fw_leaderboards_characters_victory_points.py
+--- a/swagger_client/models/get_fw_leaderboards_characters_victory_points.py	2018-04-21 12:25:44.000000000 +0200
++++ b/swagger_client/models/get_fw_leaderboards_characters_victory_points.py	2018-04-21 16:33:55.000000000 +0200
+@@ -16,9 +16,9 @@
+ 
+ import six
+ 
+-from swagger_client.models.get_fw_leaderboards_characters_active_total1 import GetFwLeaderboardsCharactersActiveTotal1  # noqa: F401,E501
+-from swagger_client.models.get_fw_leaderboards_characters_last_week1 import GetFwLeaderboardsCharactersLastWeek1  # noqa: F401,E501
+-from swagger_client.models.get_fw_leaderboards_characters_yesterday1 import GetFwLeaderboardsCharactersYesterday1  # noqa: F401,E501
++from swagger_client.models.get_fw_leaderboards_characters_active_total_1 import GetFwLeaderboardsCharactersActiveTotal1  # noqa: F401,E501
++from swagger_client.models.get_fw_leaderboards_characters_last_week_1 import GetFwLeaderboardsCharactersLastWeek1  # noqa: F401,E501
++from swagger_client.models.get_fw_leaderboards_characters_yesterday_1 import GetFwLeaderboardsCharactersYesterday1  # noqa: F401,E501
+ 
+ 
+ class GetFwLeaderboardsCharactersVictoryPoints(object):
+diff -ru a/swagger_client/models/get_fw_leaderboards_corporations_victory_points.py b/swagger_client/models/get_fw_leaderboards_corporations_victory_points.py
+--- a/swagger_client/models/get_fw_leaderboards_corporations_victory_points.py	2018-04-21 12:25:44.000000000 +0200
++++ b/swagger_client/models/get_fw_leaderboards_corporations_victory_points.py	2018-04-21 16:33:55.000000000 +0200
+@@ -16,9 +16,9 @@
+ 
+ import six
+ 
+-from swagger_client.models.get_fw_leaderboards_corporations_active_total1 import GetFwLeaderboardsCorporationsActiveTotal1  # noqa: F401,E501
+-from swagger_client.models.get_fw_leaderboards_corporations_last_week1 import GetFwLeaderboardsCorporationsLastWeek1  # noqa: F401,E501
+-from swagger_client.models.get_fw_leaderboards_corporations_yesterday1 import GetFwLeaderboardsCorporationsYesterday1  # noqa: F401,E501
++from swagger_client.models.get_fw_leaderboards_corporations_active_total_1 import GetFwLeaderboardsCorporationsActiveTotal1  # noqa: F401,E501
++from swagger_client.models.get_fw_leaderboards_corporations_last_week_1 import GetFwLeaderboardsCorporationsLastWeek1  # noqa: F401,E501
++from swagger_client.models.get_fw_leaderboards_corporations_yesterday_1 import GetFwLeaderboardsCorporationsYesterday1  # noqa: F401,E501
+ 
+ 
+ class GetFwLeaderboardsCorporationsVictoryPoints(object):
+diff -ru a/swagger_client/models/get_fw_leaderboards_victory_points.py b/swagger_client/models/get_fw_leaderboards_victory_points.py
+--- a/swagger_client/models/get_fw_leaderboards_victory_points.py	2018-04-21 12:25:44.000000000 +0200
++++ b/swagger_client/models/get_fw_leaderboards_victory_points.py	2018-04-21 16:33:55.000000000 +0200
+@@ -16,9 +16,9 @@
+ 
+ import six
+ 
+-from swagger_client.models.get_fw_leaderboards_active_total1 import GetFwLeaderboardsActiveTotal1  # noqa: F401,E501
+-from swagger_client.models.get_fw_leaderboards_last_week1 import GetFwLeaderboardsLastWeek1  # noqa: F401,E501
+-from swagger_client.models.get_fw_leaderboards_yesterday1 import GetFwLeaderboardsYesterday1  # noqa: F401,E501
++from swagger_client.models.get_fw_leaderboards_active_total_1 import GetFwLeaderboardsActiveTotal1  # noqa: F401,E501
++from swagger_client.models.get_fw_leaderboards_last_week_1 import GetFwLeaderboardsLastWeek1  # noqa: F401,E501
++from swagger_client.models.get_fw_leaderboards_yesterday_1 import GetFwLeaderboardsYesterday1  # noqa: F401,E501
+ 
+ 
+ class GetFwLeaderboardsVictoryPoints(object):
+diff -ru a/swagger_client/models/get_killmails_killmail_id_killmail_hash_victim.py b/swagger_client/models/get_killmails_killmail_id_killmail_hash_victim.py
+--- a/swagger_client/models/get_killmails_killmail_id_killmail_hash_victim.py	2018-04-21 12:25:44.000000000 +0200
++++ b/swagger_client/models/get_killmails_killmail_id_killmail_hash_victim.py	2018-04-21 16:33:55.000000000 +0200
+@@ -16,7 +16,7 @@
+ 
+ import six
+ 
+-from swagger_client.models.get_killmails_killmail_id_killmail_hash_item1 import GetKillmailsKillmailIdKillmailHashItem1  # noqa: F401,E501
++from swagger_client.models.get_killmails_killmail_id_killmail_hash_item_1 import GetKillmailsKillmailIdKillmailHashItem1  # noqa: F401,E501
+ from swagger_client.models.get_killmails_killmail_id_killmail_hash_position import GetKillmailsKillmailIdKillmailHashPosition  # noqa: F401,E501
+ 
+ 

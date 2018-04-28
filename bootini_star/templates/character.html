@@ -1,0 +1,24 @@
+{% extends "bootstrap.html" %}
+{% if character %}
+	{% block title %}{{ character.name }}{% endblock %}
+{% endif %}
+{% block body %}
+{% if character %}
+<div class="container-fluid mx-1">
+    <br/>
+    <table class="table table-striped">
+    	<caption>EVE character {{ character.name }}</caption>
+        <tbody>
+            {% for key, value in character.__dict__.items() %}
+           	{% if not show or key in show %}
+            <tr>
+                <td>{{ key }}</td>
+                <td>{{ value|evecleanup|safe if key=='_description' else value }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

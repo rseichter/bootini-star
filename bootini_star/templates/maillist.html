@@ -1,0 +1,35 @@
+{% extends "bootstrap.html" %}
+{% if character_id %}
+	{% block title %}Mail of {{ eveCache.eve_character(character_id).name }}{% endblock %}
+{% endif %}
+{% block body %}
+{% if character_id and maillist %}
+<div class="container-fluid mx-1">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">From</th>
+                <th scope="col">Subject</th>
+                <th scope="col">Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mail in maillist %}
+            <tr>
+                <td>
+                	<a href="{{ url_for('bs.character', character_id=mail._from) }}">
+                		{{ eveCache.eve_character(mail._from).name }}
+                	</a>
+                <td>
+                	<a href="{{ url_for('bs.mail', args=[character_id, mail.mail_id]|join(',')) }}">
+                	{{ mail.subject }}
+                	</a>
+                </td>
+                <td>{{ mail.timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "bootstrap.html" %}
+{% if mail %}
+	{% block title %}{{ mail.subject }}{% endblock %}
+{% endif %}
+{% block body %}
+{% if mail %}
+<div class="container-fluid m-3">
+    <div class="row mr-3">
+        <a href="{{ url_for('bs.character', character_id=mail._from) }}">
+        	{{ eveCache.eve_character(mail._from).name }}</a>
+        &nbsp; // &nbsp; {{ mail.subject }}
+    </div>
+    <br/>
+    <div class="row mr-3">
+        <p>{{ mail.body|evecleanup|safe }}</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

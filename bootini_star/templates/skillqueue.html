@@ -1,0 +1,52 @@
+{% extends "bootstrap.html" %}
+{% if character_id %}
+	{% block title %}Skill queue of {{ eveCache.eve_character(character_id).name }}{% endblock %}
+{% endif %}
+{% block body %}
+{% if character_id and skillq %}
+<div class="container-fluid mx-1">
+	<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+<!--
+swagger_types = {
+    'skill_id': 'int',
+    'finish_date': 'datetime',
+    'start_date': 'datetime',
+    'finished_level': 'int',
+    'queue_position': 'int',
+    'training_start_sp': 'int',
+    'level_end_sp': 'int',
+    'level_start_sp': 'int'
+}
+-->
+            <tr>
+				<th scope="col">Skill name</th>
+				<th scope="col">Level</th>
+				<th scope="col">Finishes at</th>
+				<!-- <th scope="col">start_date</th>
+				<th scope="col">queue_position</th>
+				<th scope="col">training_start_sp</th>
+				<th scope="col">level_end_sp</th>
+				<th scope="col">level_start_sp</th> -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for qe in skillq %}
+            <tr>
+				<td>{{ eveCache.eve_type(qe.skill_id).name }}</td>
+				<td>{{ qe.finished_level }}</td>
+				<td>{{ qe.finish_date if qe.finish_date else 'Training suspended' }}</td>
+				<!-- <td>{{ qe.start_date }}</td>
+				<td>{{ qe.queue_position }}</td>
+				<td>{{ qe.training_start_sp }}</td>
+				<td>{{ qe.level_end_sp }}</td>
+				<td>{{ qe.level_start_sp }}</td> -->
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
