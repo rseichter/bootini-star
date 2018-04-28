@@ -17,10 +17,10 @@ instance of BS and/or help with the development.
 ## Requirements
 
 1. An active EVE Online player account (Alpha or Omega).
-* A registered application with [CCP Games](https://developers.eveonline.com).
-* Python 3.4 or later (3.6 is recommended).
-* [pip](https://pypi.python.org/pypi/pip)
-* [bash](https://www.gnu.org/software/bash/) or similar.
+1. A registered application with [CCP Games](https://developers.eveonline.com).
+1. Python 3.4 or later (3.6 is recommended).
+1. [pip](https://pypi.python.org/pypi/pip)
+1. [bash](https://www.gnu.org/software/bash/) or similar.
 
 ## Setting up a fresh environment
 
@@ -94,7 +94,8 @@ accounts.
 ## Running the application
 
 Make sure to set up your environment properly for each development session, as
-described above. You might want to add these commands to a shell script. With the correct environment, all that's left to do is this:
+described above. You might want to add these commands to a shell script. With
+the correct environment, all that's left to do is this:
 
 ```shell
 # Set up environment first!
