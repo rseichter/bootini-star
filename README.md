@@ -2,8 +2,8 @@
 
 If you miss CCP's discontinued EVE Gate application, Bootini Star--abbreviated
 as 'BS' from here on out--may be for you. BS is written in Python and uses the
-EVE Swagger Interface, Flask and more to allow EVE players to handle their
-evemail et al in a web browser.
+EVE Swagger Interface, Flask and more to allow EVE Online players to handle
+their evemail et al in a web browser.
 
 # What do I need?
 
