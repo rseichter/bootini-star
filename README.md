@@ -82,7 +82,6 @@ create the database:
 psql -U postgres -c 'create database bs;'
 # Developers need a test DB as well
 psql -U postgres -c 'create database bs_test;'
-flask db upgrade
 ```
 
 BS requires some static data, which you can load as follows, assuming you named
