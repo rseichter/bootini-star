@@ -13,7 +13,7 @@
            	{% if not show or key in show %}
             <tr>
                 <td>{{ key }}</td>
-                <td>{{ value|eve_html|safe if key=='_description' else value }}</td>
+                <td>{{ value | eve_html | showinfo(url_for('bs.index')) | safe if key=='_description' else value }}</td>
             </tr>
             {% endif %}
             {% endfor %}
