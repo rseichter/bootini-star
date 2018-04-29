@@ -12,7 +12,7 @@
     </div>
     <br/>
     <div class="row mr-3">
-        <p>{{ mail.body|evecleanup|safe }}</p>
+        <p>{{ mail.body | eve_html | showinfo(url_for('bs.index')) | safe }}</p>
     </div>
 </div>
 {% endif %}

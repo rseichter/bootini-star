@@ -37,15 +37,42 @@ app.register_blueprint(bs_blueprint)
 app.register_blueprint(sso_blueprint)
 
 
-@app.template_filter('evecleanup')
-def evecleanup_filter(html):
+_re_flags = re.RegexFlag.MULTILINE
+_div_pat = re.compile(r'<div>(.*?)</div>', flags=_re_flags)
+_font_pat = re.compile(r'<(font[^>]*|/font)>', flags=_re_flags)
+_span_pat = re.compile(r'<(span[^>]*|/span)>', flags=_re_flags)
+_si_pat = re.compile(r'href="showinfo:(\d+)//(\d+)"', flags=_re_flags)
+
+
+@app.template_filter('eve_html')
+def html_filter(html):
     """
     Strip selected HTML tags created within EVE's mail client.
 
     :type html: str
     :param html: HTML string to clean up
     """
-    flags = re.RegexFlag.MULTILINE
-    s = re.sub(r'<(font[^>]*|/font)>', '', html, flags=flags)
-    s = re.sub(r'<(span[^>]*|/span)>', '', s, flags=flags)
-    return re.sub(r'<div>(.*?)</div>', r'\1', s, flags=flags)
+    html = re.sub(_font_pat, '', html)
+    html = re.sub(_span_pat, '', html)
+    return re.sub(_div_pat, r'\1', html)
+
+
+@app.template_filter('showinfo')
+def showinfo_filter(html, urlbase):
+    """
+    Convert EVE 'showinfo' links into HTML links. This currently only works for
+    links that reference EVE characters, other link types are ignored.
+
+    :type html: str
+    :param html: HTML string to parse.
+    """
+    flags = _re_flags
+    pos = 0
+    m = _si_pat.search(html)
+    while m:
+        if 1373 <= int(m.group(1)) <= 1386:
+            href = 'href="%scharacter/%s"' % (urlbase, m.group(2))
+            html = re.sub(m.group(0), href, html, flags=flags)
+        pos += len(m.group(0))
+        m = _si_pat.search(html, pos)
+    return html
