@@ -1,3 +1,6 @@
+"""Setup module for Bootini Star."""
+__author__ = 'Ralph Seichter'
+
 from setuptools import setup
 
 setup(
