@@ -29,12 +29,21 @@ def pg_utcnow(element, compiler, **kwargs):
 
 
 @compiles(utcnow, 'mssql')
-def ms_utcnow(element, compiler, **kwargs):
+def mssql_utcnow(element, compiler, **kwargs):
     """
     Return statement representing 'UTC now' in Microsoft SQL Server dialect.
     Used by SQLAlchemy.
     """
-    return "GETUTCDATE()"
+    return 'GETUTCDATE()'
+
+
+@compiles(utcnow, 'mysql')
+def mysql_utcnow(element, compiler, **kwargs):
+    """
+    Return statement representing 'UTC now' in MySQL dialect.
+    Used by SQLAlchemy.
+    """
+    return 'CURRENT_TIMESTAMP()'
 
 
 class User(db.Model, flask_login.UserMixin):

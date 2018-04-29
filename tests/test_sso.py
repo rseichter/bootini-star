@@ -7,7 +7,7 @@ import unittest
 from bootini_star.sso import EveSso
 from .base import TestCase
 from uuid import uuid4
-from oauthlib.oauth2.rfc6749.errors import InvalidClientIdError
+from oauthlib.oauth2.rfc6749.errors import OAuth2Error
 
 
 class Sso(TestCase):
@@ -28,7 +28,7 @@ class Sso(TestCase):
         self.assertFalse(is_new)
 
     def test_refresh_token_force(self):
-        with self.assertRaises(InvalidClientIdError):
+        with self.assertRaises(OAuth2Error):
             self.es.refresh_token(force_refresh=True)
 
 

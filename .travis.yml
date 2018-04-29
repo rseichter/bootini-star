@@ -2,8 +2,8 @@ language: python
 python:
   - "3.6"
 script:
-  - python -m unittest discover || echo 'Forcing exit with return code 0'
-services:
-  - postgresql
+  - python -m unittest discover
+addons:
+  postgresql: "10"
 before_script:
-  - psql -c 'create database bs_test;' -U postgres
+  - psql -U postgres -c 'create database bs_test;'

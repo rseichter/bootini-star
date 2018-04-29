@@ -39,9 +39,11 @@ python3.6 -m venv venv
 source venv/bin/activate
 ```
 
-Install BS and required packages. Note that I use a PostgreSQL database for
-local development, and the necessary package is therefore listed in the
-requirements file.
+Install BS and required packages. Note that I use a
+[PostgreSQL](https://www.postgresql.org) database and the necessary package is
+therefore listed in the requirements file. The commands shown in this document
+are also aimed at PostgreSQL, but I have successfully tested the application
+with [MySQL](https://www.mysql.com) as well.
 
 ```shell
 pip install -e .
@@ -74,19 +76,34 @@ export ESI_SECRET_KEY='Your ESI secret key'
 SQLALCHEMY_DATABASE_URI='postgresql://postgres:@localhost/bs'
 ```
 Once the settings are to your satisfaction,
-initialise the database:
+create the database:
 
 ```shell
+psql -U postgres -c 'create database bs;'
+# Developers need a test DB as well
+psql -U postgres -c 'create database bs_test;'
 flask db upgrade
 ```
 
-This will create the necessary DB tables. BS also requires some static data,
-which you can load into PostgreSQL as follows, assuming you named your local
-database 'bs'.
+BS requires some static data, which you can load as follows, assuming you named
+your local database 'bs'.
 
 ```shell
 cd db-static
 ./db-helper bs load
+```
+
+You can pipe the output of the helper script into ```/bin/sh``` once you have
+verified that it suits your needs.
+
+Finally, let Flask create the remaining DB tables. If you are not using
+PostgreSQL, you will need to edit the migration scripts first.
+
+```shell
+# Adapt scripts if NOT using PostgreSQL
+flask db edit
+# Execute scripts
+flask db upgrade
 ```
 
 ## Why is there no complete default configuration?

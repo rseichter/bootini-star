@@ -9,7 +9,8 @@ from sqlalchemy.exc import IntegrityError
 
 from bootini_star import app
 from bootini_star.extensions import db
-from bootini_star.models import ms_utcnow, pg_utcnow, character_loader
+from bootini_star.models import character_loader
+from bootini_star.models import mssql_utcnow, mysql_utcnow, pg_utcnow
 from .base import TestCase, Character, User
 from .base import character_id, character_name
 from .base import email, uuid
@@ -17,8 +18,11 @@ from .base import email, uuid
 
 class Dialects(unittest.TestCase):
 
-    def test_ms_utcnow(self):
-        self.assertTrue('GETUTCDATE' in ms_utcnow(None, None))
+    def test_mssql_utcnow(self):
+        self.assertTrue('GETUTCDATE' in mssql_utcnow(None, None))
+
+    def test_mysql_utcnow(self):
+        self.assertTrue('CURRENT_TIMESTAMP' in mysql_utcnow(None, None))
 
     def test_pg_utcnow(self):
         self.assertTrue('CURRENT_TIMESTAMP' in pg_utcnow(None, None))

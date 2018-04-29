@@ -5,10 +5,11 @@
 # item groups and item types.
 
 dbname="$1"
-shift
+action="$2"
+dialect="${3:-postgresql}"
 
 TABLES='groups types'
-case "$1" in
+case "$action" in
 	dump)
 		opt='--clean --column-inserts'
 		for table in $TABLES; do
@@ -17,10 +18,21 @@ case "$1" in
 		;;
 	load)
 		for table in $TABLES; do
-			bzcat $table.sql.bz2 | psql --quiet $dbname
+			case "$dialect" in
+				mysql)
+					echo "bzcat $table.sql.bz2 | mysql -u bs -psecret -h xenon $dbname"
+					;;
+				postgresql)
+					echo "bzcat $table.sql.bz2 | psql -U postgres -q $dbname"
+					;;
+				*)
+					echo "Unknow dialect '$dialect'" >&2
+					exit 1
+			esac
 		done
 		;;
 	*)
-		echo "Usage: $(basename $0) {dbname} {dump | load}" >&2
+		echo "Usage   : $(basename $0) {dbname} {dump | load} [mysql | postgresql]" >&2
+		echo "Example : $(basename $0) bs load mysql" >&2
 		exit 1
 esac
