@@ -5,5 +5,9 @@ script:
   - python -m unittest discover
 addons:
   postgresql: "10"
+  apt:
+    packages:
+    - postgresql-10
+    - postgresql-client-10
 before_script:
   - psql -U postgres -c 'create database bs_test;'
