@@ -6,12 +6,14 @@ __author__ = 'Ralph Seichter'
 import unittest
 from bootini_star import app
 from bootini_star.email import RegistrationMail
+from .base import skipUnlessOnline
 
-url = 'Ze URL goes here'
+url = '<<< not yet implemented >>>'
 
 
 class Mail(unittest.TestCase):
 
+    @skipUnlessOnline
     def test_regmail(self):
         address = app.config['SMTP_SENDER_ADDRESS']
         headers = {'From': address, 'To': address}
