@@ -26,14 +26,17 @@ from swagger_client.rest import ApiException
 
 eveCache = IdNameCache()
 
+
 class InvalidUsage(Exception):
     status_code = 400
+
     def __init__(self, message, status_code=None, payload=None):
         super()
         self.message = message
         if status_code:
             self.status_code = status_code
         self.payload = payload
+
     def to_dict(self):
         rv = dict(self.payload or ())
         rv['message'] = self.message
@@ -43,8 +46,8 @@ class InvalidUsage(Exception):
 def is_safe_url(target):
     ref_url = urlparse(request.host_url)
     target_url = urlparse(urljoin(request.host_url, target))
-    log.info('ref netloc: ' + ref_url.netloc)
-    log.info('target netloc: ' + target_url.netloc)
+    log.debug('ref netloc: ' + ref_url.netloc)
+    log.debug('target netloc: ' + target_url.netloc)
     return (target_url.scheme in ('http', 'https')) and ref_url.netloc.casefold() == target_url.netloc.casefold()
 
 
@@ -99,9 +102,9 @@ class Login(MethodView):
             nxt = request.args.get('next')
             if nxt:
                 if not is_safe_url(nxt):
-                    log.info(nxt + ' is unsafe')
+                    log.debug(nxt + ' is unsafe')
                     raise InvalidUsage('Naughty redirect attempted')
-                log.info(nxt + ' is safe')
+                log.debug(nxt + ' is safe')
             return redirect(nxt or url_for('.dashboard'))
         flash('Your login was not successful.', 'danger')
         return redirect(url_for('.login'))

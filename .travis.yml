@@ -2,8 +2,8 @@ language: python
 python:
   - "3.6"
 script:
-  - python -m unittest discover || echo "Trying to figure out why a test that passes locally fails in Travis."
+  - python -m unittest discover
 services:
   - postgresql
 before_script:
-  - psql -U postgres -c 'create database bs_test;'
+  - psql -U postgres -c 'CREATE DATABASE bs_test;'
