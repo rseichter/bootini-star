@@ -13,9 +13,10 @@ from .extensions import log
 
 scope = [
     'esi-characters.read_standings.v1',
+    'esi-mail.organize_mail.v1',
     'esi-mail.read_mail.v1',
+    'esi-mail.send_mail.v1',
     'esi-skills.read_skillqueue.v1',
-    'esi-wallet.read_character_wallet.v1',
 ]
 
 

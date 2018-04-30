@@ -155,6 +155,10 @@ class AllViews(TestCase):
         resp = self.signup(email2, password2)
         self.assertTrue(b'Please fill all fields' in resp.data)
 
+    def test_signup_bad_email(self):
+        resp = self.signup('a@b.c', password2)
+        self.assertTrue(b'Please enter a valid email' in resp.data)
+
     def test_signup_existing(self):
         add_user2()
         resp = self.signup(email2, password2, password2)
@@ -258,6 +262,35 @@ class AllViews(TestCase):
             self.assertRedirect(
                 self.app.get(
                     url_for('bs.skillqueue', character_id=chribba_id)),
+                url_for('bs.dashboard')
+            )
+
+    def test_rm_mail_invalid_char_id(self):
+        self.login(email, password)
+        with app.app_context(), self.assertRaises(ValueError):
+            self.app.get(url_for('bs.rmmail', args='bad,123'))
+
+    def test_rm_mail_invalid_mail_id(self):
+        self.login(email, password)
+        with app.app_context(), self.assertRaises(ValueError):
+            self.app.get(url_for('bs.rmmail', args='123,bad'))
+
+    def test_rm_mail_valid_args(self):
+        add_user3()
+        self.login(email3, password3)
+        with app.app_context():
+            self.assertRedirect(
+                self.app.get(url_for('bs.rmmail', args='123,456')),
+                url_for('bs.dashboard')
+            )
+
+    def test_rm_mail_known_user(self):
+        add_user3()
+        self.login(email3, password3)
+        with app.app_context():
+            self.assertRedirect(
+                self.app.get(
+                    url_for('bs.rmmail', args=str(character_id) + ',123')),
                 url_for('bs.dashboard')
             )
 

@@ -1,7 +1,4 @@
-{% extends "bootstrap.html" %}
-{% block title %}Data dump{% endblock %}
-{% block body %}
-{% if what %}
+{% extends "bootstrap.html" %} {% block title %}Data dump{% endblock %} {% block body %} {% if what %}
 <div class="container-fluid mx-1">
     <p>Attributes for {{ what.__class__.__name__ }} object:</p>
     <table class="table table-striped">
@@ -15,5 +12,4 @@
         </tbody>
     </table>
 </div>
-{% endif %}
-{% endblock %}
+{% endif %} {% endblock %}

@@ -5,6 +5,7 @@ combined into a Flask blueprint.
 __author__ = 'Ralph Seichter'
 
 import json
+import re
 from operator import attrgetter
 from urllib.parse import urlparse, urljoin
 from uuid import uuid4
@@ -49,21 +50,21 @@ class Signup(MethodView):
         return render_template('signup.html', form=SignupForm())
 
     def post(self):
-        email = request.form['email']
+        email = request.form['email'].strip()
         password = request.form['password']
         confirm = request.form['confirm']
+        if not re.search(r'\w\@[\w-]{2,}\.\w{2,}', email):
+            flash('Please enter a valid email address.', 'warning')
+            return redirect(url_for('.signup'))
         if not (email and password and confirm):
             flash('Please fill all fields.', 'warning')
-            return render_template('signup.html', form=SignupForm())
-
+            return redirect(url_for('.signup'))
         if password != confirm:
             flash('Passwords do not match.', 'warning')
             return redirect(url_for('.signup'))
-
         if user_loader(email):
             flash('This address is already registered.', 'warning')
             return redirect(url_for('.signup'))
-
         user = User(email, password, str(uuid4()))
         db.session.add(user)
         db.session.commit()
@@ -188,6 +189,29 @@ class Mail(MethodView):
         return redirect(url_for('.dashboard'))
 
 
+class RemoveMail(MethodView):
+    methods = ['GET']
+
+    @flask_login.login_required
+    def get(self, args):
+        x = args.split(',')
+        character_id = int(x[0])
+        mail_id = int(x[1])
+        cc = current_user.load_character(character_id)
+        if cc:  # pragma: no cover (Needs valid tokens)
+            api = swagger_client.MailApi()
+            refresh_token(api, cc)
+            try:
+                api.delete_characters_character_id_mail_mail_id(
+                    character_id, mail_id)
+            except ApiException as e:
+                return api_fail(e)
+            return redirect(url_for('.maillist', character_id=character_id))
+        else:
+            flash('Please select one of your characters.', 'warning')
+        return redirect(url_for('.dashboard'))
+
+
 class RemoveCharacter(MethodView):
     methods = ['GET']
 
@@ -209,7 +233,7 @@ class Skills(MethodView):
     @flask_login.login_required
     def get(self, character_id):
         cc = current_user.load_character(character_id)
-        if cc:  # pragma: no cover (Never true without valid tokens in DB)
+        if cc:  # pragma: no cover (Needs valid tokens)
             api = swagger_client.SkillsApi()
             refresh_token(api, cc)
             try:
@@ -235,6 +259,8 @@ blueprint.add_url_rule('/signup', view_func=Signup.as_view('signup'))
 blueprint.add_url_rule('/character/<int:character_id>',
                        view_func=Character.as_view('character'))
 blueprint.add_url_rule('/mail/<string:args>', view_func=Mail.as_view('mail'))
+blueprint.add_url_rule('/mail/rm/<string:args>',
+                       view_func=RemoveMail.as_view('rmmail'))
 blueprint.add_url_rule('/maillist/<int:character_id>',
                        view_func=MailList.as_view('maillist'))
 blueprint.add_url_rule('/skillqueue/<int:character_id>',

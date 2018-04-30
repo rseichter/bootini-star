@@ -1,9 +1,4 @@
-{% extends "bootstrap.html" %}
-{% if character_id %}
-	{% block title %}Mail of {{ eveCache.eve_character(character_id).name }}{% endblock %}
-{% endif %}
-{% block body %}
-{% if character_id and maillist %}
+{% extends "bootstrap.html" %} {% if character_id %} {% block title %}Mail of {{ eveCache.eve_character(character_id).name }}{% endblock %} {% endif %} {% block body %} {% if character_id and maillist %}
 <div class="container-fluid mx-1">
     <table class="table table-striped">
         <thead>
@@ -17,19 +12,18 @@
             {% for mail in maillist %}
             <tr>
                 <td>
-                	<a href="{{ url_for('bs.character', character_id=mail._from) }}">
-                		{{ eveCache.eve_character(mail._from).name }}
-                	</a>
-                <td>
-                	<a href="{{ url_for('bs.mail', args=[character_id, mail.mail_id]|join(',')) }}">
-                	{{ mail.subject }}
-                	</a>
-                </td>
-                <td>{{ mail.timestamp }}</td>
+                    <a href="{{ url_for('bs.character', character_id=mail._from) }}">
+                        {{ eveCache.eve_character(mail._from).name }}
+                    </a>
+                    <td>
+                        <a href="{{ url_for('bs.mail', args=[character_id, mail.mail_id]|join(',')) }}">
+                    {{ mail.subject }}
+                    </a>
+                    </td>
+                    <td>{{ mail.timestamp }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-{% endif %}
-{% endblock %}
+{% endif %} {% endblock %}

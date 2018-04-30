@@ -1,19 +1,52 @@
-{% extends "bootstrap.html" %}
-{% if mail %}
-	{% block title %}{{ mail.subject }}{% endblock %}
-{% endif %}
-{% block body %}
-{% if mail %}
+{% extends "bootstrap.html" %} {% if mail %} {% block title %}{{ mail.subject }}{% endblock %} {% endif %} {% block body %} {% if mail %}
 <div class="container-fluid m-3">
     <div class="row mr-3">
         <a href="{{ url_for('bs.character', character_id=mail._from) }}">
-        	{{ eveCache.eve_character(mail._from).name }}</a>
-        &nbsp; // &nbsp; {{ mail.subject }}
+            {{ eveCache.eve_character(mail._from).name }}</a> &nbsp; // &nbsp; {{ mail.subject }}
     </div>
     <br/>
     <div class="row mr-3">
         <p>{{ mail.body | eve_html | showinfo(url_for('bs.index')) | safe }}</p>
     </div>
+    <div class="row mr-3">
+        <button type="button" class="btn btn-danger showModal" data-toggle="modal" data-target="#bsModal">Delete</button>
+    </div>
 </div>
-{% endif %}
+
+<div class="modal fade" id="bsModal" tabindex="-1" role="dialog" aria-labelledby="bsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bsModalLabel">Delete mail</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+            </div>
+            <div class="modal-body"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="yesPlease">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %} {% endblock %} {% block javascript %}
+<script type="text/javascript">
+    $(function() {
+        $(".showModal").click(function() {
+            var charid = $(this).data("charid");
+            var msg = "Do you want to permanently delete this mail?";
+            msg += " This action cannot be undone.";
+            $("#yesPlease").data("charid", charid);
+            $(".modal-body").html(msg);
+        })
+    });
+    $(function() {
+        $("#yesPlease").click(function() {
+            var url = $(location).attr("href").replace("/mail/", "/mail/rm/");
+            $("#bsModal").modal("hide");
+            $(location).attr("href", url);
+        });
+    });
+</script>
 {% endblock %}

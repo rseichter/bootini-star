@@ -41,7 +41,7 @@ class Callback(MethodView):
             db.session.merge(character)
             db.session.commit()
             flash('Verification successful.', 'success')
-            return render_template('dump.html', what=vars(character))
+            return redirect(url_for('bs.dashboard'))
         else:  # pragma: no cover
             flash('Verification failed.', 'error')
             return redirect(url_for('bs.index'))
