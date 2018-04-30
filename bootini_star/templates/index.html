@@ -6,7 +6,11 @@
     </div>
     {% else %}
     <div class="row justify-content-md-center">
-        <p>You need to be logged in to use this website.</p>
+        <p>Inspect <a href="https://www.eveonline.com">EVE Online</a> mail and skill queues in a web browser.</p>
+    </div>
+    <div class="row justify-content-md-center m-5">
+        <p>Note that is is a developer test installation of work in progress, programmed by
+            <a href="https://github.com/rseichter/bootini-star">an EVE Online enthusiast</a>. It is neither 'official' or endorsed by CCP. Yet. In other words, here be dragons. Enter at your own risk.</p>
     </div>
     <div class="row justify-content-md-center">
         <button type="button" class="btn btn-lg btn-success" onclick="location.href='{{ url_for('bs.login') }}'">Login</button> &nbsp; &nbsp;

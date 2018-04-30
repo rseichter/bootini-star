@@ -8,9 +8,10 @@ their evemail et al in a web browser.
 # What do I need?
 
 You can either run BS yourself if you meet the requirements listed below, or
-find somebody who already runs a BS installation like I do, in which case you
-only need a web browser. This text is meant for people who want to run their own
-instance of BS and/or help with the development.
+find somebody who already runs a BS installation [like I
+do](https://bs.willexplo.de), in which case you only need a web browser. This
+text is meant for people who want to run their own instance of BS and/or help
+with the development.
 
 # How do I run my own instance?
 
