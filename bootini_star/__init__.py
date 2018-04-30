@@ -42,6 +42,7 @@ _div_pat = re.compile(r'<div>(.*?)</div>', flags=_re_flags)
 _font_pat = re.compile(r'<(font[^>]*|/font)>', flags=_re_flags)
 _span_pat = re.compile(r'<(span[^>]*|/span)>', flags=_re_flags)
 _si_pat = re.compile(r'href="showinfo:(\d+)//(\d+)"', flags=_re_flags)
+email_pat = re.compile(r'\w\@[\w-]{2,}\.\w{2,}')
 
 
 @app.template_filter('eve_html')

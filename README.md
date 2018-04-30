@@ -32,11 +32,13 @@ cd /your/projects
 git clone https://github.com/rseichter/bootini-star.git
 ```
 
-Create and activate a fresh virtual Python environment:
+Create and activate a fresh virtual Python environment. Remember to repeat the
+activation step whenever you open a new shell session.
 
 ```shell
 cd bootini-star
-python3.6 -m venv venv
+python -m venv venv
+# Repeat the following for every new shell session
 source venv/bin/activate
 ```
 
@@ -57,27 +59,61 @@ which flask
 The last command should return ```/your/projects/bootini-star/venv/bin/flask```.
 
 Next, you need to configure BS according to your local needs using environment
-variables. See the ```config.py``` module for a list of environment variables
-to use.
+variables. See the ```config.py``` module for a list of environment variables to
+use.  Proper quoting is important so that your shell does not interfere with
+your settings.
 
 ```shell
-cd /your/projects/bootini-star
-# Activate the virtual Python environment
-source venv/bin/activate
-# Flask basics
+# Flask basics.
 export FLASK_APP='bootini_star'
 export FLASK_ENV='development'
-# Allow HTTP callbacks during local development
-export OAUTHLIB_INSECURE_TRANSPORT=1
-# Change the following three lines!
+
+# Important for the safety of all users.
 export SECRET_KEY='Choose something random here'
-export ESI_CLIENT_ID='Your ESI client ID'
-export ESI_SECRET_KEY='Your ESI secret key'
-# Change to whatever DB you use
-SQLALCHEMY_DATABASE_URI='postgresql://postgres:@localhost/bs'
+
+# Allow HTTP callback URIs only during local development.
+# If this is not set (which is the default) HTTPS is required.
+export OAUTHLIB_INSECURE_TRANSPORT=1
+export ESI_CALLBACK_URI='http://127.0.0.1:5000/sso/callback'
+
+# ESI data is provided by CCP.
+export ESI_CLIENT_ID='Your client ID'
+export ESI_SECRET_KEY='Your secret key'
+
+# BS needs a database.
+export SQLALCHEMY_DATABASE_URI='postgresql://postgres:@localhost/bs'
+
+# Email settings for user registration.
+export SMTP_SENDER_ADDRESS='itsa-me-mario@example.com'
+export SMTP_SERVER_URI='tls://smtp.example.com/mario?DonkeyKong'
 ```
-Once the settings are to your satisfaction,
-create the database:
+
+Make certain to specify a valid sender address or spam protection might kill off
+your registration emails. Your users will also want to be able to contact you if
+they have questions. As Robert Earhart's
+[draft](https://tools.ietf.org/html/draft-earhart-url-smtp-00) for specifying
+SMTP servers using URIs was never ratified, I decided to implement things
+thusly:
+
+SMTP server running on the local machine, no authentication:
+
+```
+smtp://localhost
+```
+
+Host with TLS authentication, user 'mario', password 'DonkeyKong':
+
+```
+tls://host.example.com/mario?DonkeyKong
+```
+
+You may specify a port number (e.g. smtp://localhost:4321) if the server listens
+on a non-standard port. The defaults are port 25 for unencrypted SMTP sessions
+and port 587 for SMTP with TLS, and BS smartly (cough) uses the proper values if
+you don't specify a port.
+
+
+Once the environment is configured to your satisfaction, create the database:
 
 ```shell
 psql -U postgres -c 'create database bs;'

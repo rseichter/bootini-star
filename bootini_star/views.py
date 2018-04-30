@@ -17,6 +17,7 @@ import flask_login
 from flask_login.utils import current_user
 
 from .esi import IdNameCache
+from .email import RegistrationMail
 from .extensions import db, log, login_manager, pwd_context
 from .forms import LoginForm, SignupForm
 from .models import User, character_list_loader, user_loader

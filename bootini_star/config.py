@@ -19,6 +19,8 @@ class Config(object):
     If you need to change settings like ESI_CALLBACK_URI to address
     local requirements, use environment variables.
     """
+    SMTP_SERVER_URI = os.getenv('SMTP_SERVER_URI', '')
+    SMTP_SENDER_ADDRESS = os.getenv('SMTP_SENDER_ADDRESS', '')
     SECRET_KEY = os.getenv('SECRET_KEY', BAD)
     ESI_CLIENT_ID = os.getenv('ESI_CLIENT_ID', BAD)
     ESI_SECRET_KEY = os.getenv('ESI_SECRET_KEY', BAD)
