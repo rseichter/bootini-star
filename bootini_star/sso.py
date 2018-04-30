@@ -4,7 +4,6 @@ Handle EVE SSO calls.
 __author__ = 'Ralph Seichter'
 
 import datetime
-from pprint import pprint
 
 from requests_oauthlib import OAuth2Session
 
@@ -22,9 +21,10 @@ scope = [
 
 def token_updater(x):  # pragma: no cover
     ''' Only used for debugging '''
-    print('*** tu_hook:')
-    pprint(x.reason)
-    pprint(vars(x.request))
+    log.debug('*** Entering token_updater')
+    log.debug(x.reason)
+    log.debug(vars(x.request))
+    log.debug('*** Exiting token_updater')
 
 
 class EveSso(OAuth2Session):

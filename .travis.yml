@@ -6,4 +6,4 @@ script:
 services:
   - postgresql
 before_script:
-  - psql -U postgres -c 'create database bs_test;'
+  - psql -U postgres -c 'CREATE DATABASE bs_test;'

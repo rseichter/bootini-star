@@ -17,7 +17,7 @@ import flask_login
 from flask_login.utils import current_user
 
 from .esi import IdNameCache
-from .extensions import db, login_manager, pwd_context
+from .extensions import db, log, login_manager, pwd_context
 from .forms import LoginForm, SignupForm
 from .models import User, character_list_loader, user_loader
 from .sso import EveSso
@@ -27,11 +27,28 @@ from swagger_client.rest import ApiException
 eveCache = IdNameCache()
 
 
+class InvalidUsage(Exception):
+    status_code = 400
+
+    def __init__(self, message, status_code=None, payload=None):
+        super()
+        self.message = message
+        if status_code:
+            self.status_code = status_code
+        self.payload = payload
+
+    def to_dict(self):
+        rv = dict(self.payload or ())
+        rv['message'] = self.message
+        return rv
+
+
 def is_safe_url(target):
     ref_url = urlparse(request.host_url)
-    test_url = urlparse(urljoin(request.host_url, target))
-    return test_url.scheme in ('http', 'https') and \
-        ref_url.netloc == test_url.netloc
+    target_url = urlparse(urljoin(request.host_url, target))
+    log.debug('ref netloc: ' + ref_url.netloc)
+    log.debug('target netloc: ' + target_url.netloc)
+    return (target_url.scheme in ('http', 'https')) and ref_url.netloc.casefold() == target_url.netloc.casefold()
 
 
 class RenderTemplate(View):
@@ -82,10 +99,13 @@ class Login(MethodView):
         user = request_loader(request)
         if user:
             flask_login.login_user(user)
-            target = request.args.get('next')
-            if not is_safe_url(target):
-                return abort(400)
-            return redirect(target or url_for('.dashboard'))
+            nxt = request.args.get('next')
+            if nxt:
+                if not is_safe_url(nxt):
+                    log.debug(nxt + ' is unsafe')
+                    raise InvalidUsage('Naughty redirect attempted')
+                log.debug(nxt + ' is safe')
+            return redirect(nxt or url_for('.dashboard'))
         flash('Your login was not successful.', 'danger')
         return redirect(url_for('.login'))
 
