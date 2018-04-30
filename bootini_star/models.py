@@ -61,23 +61,37 @@ class User(db.Model, flask_login.UserMixin):
     """
     __tablename__ = "users"
 
+    valid_levels = {
+        'inactive': 0,
+        'registered': 1,
+        'default': 2,
+        'admin': 100,
+    }
+
     email = Column(String(100), primary_key=True, nullable=False)
     password = Column(String(250), nullable=False)
     uuid = Column(String(40), nullable=False, unique=True)
     registered_at = Column(DateTime, nullable=False, server_default=utcnow())
-    level = Column(SmallInteger, nullable=False, server_default='1')
+    level = Column(SmallInteger, nullable=False)
+    activation_token = Column(String(40))
     eve_characters = relationship('Character', backref='user', lazy=True)
 
-    def __init__(self, email, password, uuid):
+    def __init__(self, email, password, uuid, level=None, activation_token=None):
         self.email = email
         self.password = pwd_context.hash(password)
         self.uuid = uuid
+        self.level = level if level else self.valid_levels['inactive']
+        if activation_token:
+            self.activation_token = activation_token
         self.current_character = None
 
     # Required for flask_login
     def get_id(self):
         """Use email as ID (method required by Flask-Login)."""
         return self.email
+
+    def may_login(self):
+        return self.level >= self.valid_levels['default']
 
     @property
     def current_character(self):

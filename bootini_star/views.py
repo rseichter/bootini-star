@@ -18,7 +18,7 @@ from flask_login.utils import current_user
 
 from .esi import IdNameCache
 from .email import RegistrationMail
-from .extensions import db, log, login_manager, pwd_context
+from .extensions import app_config, db, log, login_manager, pwd_context
 from .forms import LoginForm, SignupForm
 from .models import User, character_list_loader, user_loader
 from .sso import EveSso
@@ -83,10 +83,34 @@ class Signup(MethodView):
         if user_loader(email):
             flash('This address is already registered.', 'warning')
             return redirect(url_for('.signup'))
-        user = User(email, password, str(uuid4()))
+        token = str(uuid4())
+        user = User(email, password, str(uuid4()), level=User.valid_levels[
+                    'registered'], activation_token=token)
         db.session.add(user)
         db.session.commit()
-        flash('Registration successful, you may now login.', 'success')
+        headers = {'From': app_config['SMTP_SENDER_ADDRESS'], 'To': email}
+        RegistrationMail().send(headers, url_for(
+            '.activate', _external=True, email=email, token=token))
+        flash('Registration successful. Please check your inbox for an activation email.', 'success')
+        return redirect(url_for('.index'))
+
+
+class Activate(MethodView):
+    methods = ['GET']
+
+    def get(self, email, token):
+        user = user_loader(email)
+        if user and user.activation_token == token:
+            user.activation_token = ''
+            user.level = user.valid_levels['default']
+            try:
+                db.session.merge(user)
+                db.session.commit()
+                flash('Your account is now active, please login.', 'success')
+                return redirect(url_for('.login'))
+            except Exception as e:
+                log.error('Account activation failed: {0}'.format(e))
+        flash('Account activation failed.', 'danger')
         return redirect(url_for('.index'))
 
 
@@ -271,6 +295,8 @@ class Skills(MethodView):
 blueprint = Blueprint('bs', __name__)
 blueprint.add_url_rule(
     '/', view_func=RenderTemplate.as_view('index', template='index.html'))
+blueprint.add_url_rule('/activate/<string:email>/<string:token>',
+                       view_func=Activate.as_view('activate'))
 blueprint.add_url_rule('/dashboard', view_func=Dashboard.as_view('dashboard'))
 blueprint.add_url_rule('/dashboard/rm/<int:character_id>',
                        view_func=RemoveCharacter.as_view('rmcharacter'))
@@ -290,7 +316,22 @@ blueprint.add_url_rule('/skillqueue/<int:character_id>',
 
 @login_manager.request_loader
 def request_loader(request):
-    user = user_loader(request.form.get('email'))
-    if user and request.form['password'] and pwd_context.verify(request.form['password'], user.password):
-        return user
+    email = request.form.get('email')
+    user = user_loader(email)
+    if user:
+        if user.may_login():
+            if request.form['password']:
+                if pwd_context.verify(request.form['password'], user.password):
+                    log.info("User '%s' (level %d) logged in" %
+                             (user.email, user.level))
+                    return user
+                else:
+                    log.warning("User '%s' password mismatch" % user.email)
+            else:
+                log.error('No password in request object')
+        else:
+            log.warning("User '%s' may not login (level %d)" %
+                        (user.email, user.level))
+    elif email:
+        log.warning("Unknown user '%s'" % email)
     return None

@@ -14,7 +14,7 @@ from flask.views import MethodView
 from flask_migrate import Migrate, migrate
 from flask_sqlalchemy import SQLAlchemy
 
-from .extensions import db, login_manager
+from .extensions import app_config, db, login_manager
 from .sso_views import blueprint as sso_blueprint
 from .views import blueprint as bs_blueprint
 
@@ -36,6 +36,7 @@ login_manager.blueprint_login_views = {
 app.register_blueprint(bs_blueprint)
 app.register_blueprint(sso_blueprint)
 
+app_config.update(app.config)
 
 _re_flags = re.RegexFlag.MULTILINE
 _div_pat = re.compile(r'<div>(.*?)</div>', flags=_re_flags)

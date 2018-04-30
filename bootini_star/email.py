@@ -10,17 +10,13 @@ from email.utils import localtime
 from uuid import uuid4
 from urllib.parse import urlparse
 import bootini_star
-from .extensions import log
+from .extensions import app_config, log
 
 
 class _Mail(object):
-    app = None
-
-    def __init__(self, app):
-        self.app = app
 
     def _parse_config(self):
-        u = urlparse(self.app.config['SMTP_SERVER_URI'])
+        u = urlparse(app_config['SMTP_SERVER_URI'])
         if not u.scheme in ['smtp', 'tls']:
             raise ValueError('SMTP_SERVER_URI missing or scheme unknown')
         self.scheme = u.scheme
@@ -34,7 +30,7 @@ class _Mail(object):
             self.password = u.query
         else:
             self.username = None
-        self.address = self.app.config['SMTP_SENDER_ADDRESS']
+        self.address = app_config['SMTP_SENDER_ADDRESS']
         if re.search(bootini_star.email_pat, self.address):
             return
         raise ValueError('SMTP_SENDER_ADDRESS missing or malformed')
