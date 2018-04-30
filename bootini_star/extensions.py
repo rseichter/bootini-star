@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 
 logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger('bootini_star')
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 login_manager = LoginManager()
 

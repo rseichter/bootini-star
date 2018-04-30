@@ -17,7 +17,7 @@ import flask_login
 from flask_login.utils import current_user
 
 from .esi import IdNameCache
-from .extensions import db, login_manager, pwd_context
+from .extensions import db, log, login_manager, pwd_context
 from .forms import LoginForm, SignupForm
 from .models import User, character_list_loader, user_loader
 from .sso import EveSso
@@ -29,9 +29,10 @@ eveCache = IdNameCache()
 
 def is_safe_url(target):
     ref_url = urlparse(request.host_url)
-    test_url = urlparse(urljoin(request.host_url, target))
-    return test_url.scheme in ('http', 'https') and \
-        ref_url.netloc == test_url.netloc
+    target_url = urlparse(urljoin(request.host_url, target))
+    log.debug('ref netloc: ' + ref_url.netloc)
+    log.debug('target netloc: ' + target_url.netloc)
+    return (target_url.scheme in ('http', 'https')) and ref_url.netloc == target_url.netloc
 
 
 class RenderTemplate(View):
@@ -84,7 +85,9 @@ class Login(MethodView):
             flask_login.login_user(user)
             target = request.args.get('next')
             if not is_safe_url(target):
+                log.debug(target + ' is unsafe')
                 return abort(400)
+            log.debug(target + ' is safe')
             return redirect(target or url_for('.dashboard'))
         flash('Your login was not successful.', 'danger')
         return redirect(url_for('.login'))
