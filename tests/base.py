@@ -7,6 +7,7 @@ import unittest
 from uuid import uuid4
 import ast
 import os
+import re
 import time
 import json
 import warnings
@@ -92,7 +93,7 @@ class TestCase(unittest.TestCase):
         if response.status_code != 302:
             self.fail('Unexpected return code ' + str(response.status_code))
         location = response.headers.get('Location')
-        if not location.startswith(relative_url):
+        if not re.match(relative_url, location, re.RegexFlag.IGNORECASE):
             msg = self._formatMessage(
                 "%s does not start with %s" % (
                     safe_repr(location), safe_repr(relative_url)),

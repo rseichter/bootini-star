@@ -30,9 +30,9 @@ eveCache = IdNameCache()
 def is_safe_url(target):
     ref_url = urlparse(request.host_url)
     target_url = urlparse(urljoin(request.host_url, target))
-    log.debug('ref netloc: ' + ref_url.netloc)
-    log.debug('target netloc: ' + target_url.netloc)
-    return (target_url.scheme in ('http', 'https')) and ref_url.netloc == target_url.netloc
+    log.info('ref netloc: ' + ref_url.netloc)
+    log.info('target netloc: ' + target_url.netloc)
+    return (target_url.scheme in ('http', 'https')) and ref_url.netloc.casefold() == target_url.netloc.casefold()
 
 
 class RenderTemplate(View):
@@ -83,12 +83,13 @@ class Login(MethodView):
         user = request_loader(request)
         if user:
             flask_login.login_user(user)
-            target = request.args.get('next')
-            if not is_safe_url(target):
-                log.debug(target + ' is unsafe')
-                return abort(400)
-            log.debug(target + ' is safe')
-            return redirect(target or url_for('.dashboard'))
+            nxt = request.args.get('next')
+            if nxt:
+                if not is_safe_url(nxt):
+                    log.info(nxt + ' is unsafe')
+                    return abort(400)
+                log.info(nxt + ' is safe')
+            return redirect(nxt or url_for('.dashboard'))
         flash('Your login was not successful.', 'danger')
         return redirect(url_for('.login'))
 
