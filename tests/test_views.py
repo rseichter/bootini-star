@@ -5,7 +5,6 @@ __author__ = 'Ralph Seichter'
 
 import unittest
 import werkzeug
-from werkzeug.exceptions import BadRequest
 from uuid import uuid4
 import time
 from flask.helpers import url_for
@@ -16,7 +15,7 @@ from bootini_star.models import Character, User
 from .base import TestCase, skipUnlessOnline, chribba_id
 from .base import email, email2, email3, password, password2, password3
 from .base import character_id, character_name, character_owner_hash
-from bootini_star.views import user_loader
+from bootini_star.views import InvalidUsage, user_loader
 
 
 def add_user2():
@@ -136,8 +135,8 @@ class AllViews(TestCase):
 
     def test_unsafe_target(self):
         add_user2()
-        with self.assertRaises(BadRequest):
-            self.login(email2, password2, target=r'http://www.python.org')
+        with self.assertRaises(InvalidUsage):
+            resp = self.login(email2, password2, target=r'http://python.org')
 
     def test_logout(self):
         resp = self.logout()
