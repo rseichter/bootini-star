@@ -19,12 +19,8 @@ class Mail(unittest.TestCase):
         headers = {'From': address, 'To': address}
         RegistrationMail(app).send(headers, url)
 
+    @skipUnlessOnline
     def test_regmail_no_headers(self):
-        headers = {}
-        with self.assertRaises(TypeError):
-            RegistrationMail(app).send(headers, url)
-
-    def test_regmail_no_address(self):
         headers = {}
         with self.assertRaises(TypeError):
             RegistrationMail(app).send(headers, url)
