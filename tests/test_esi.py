@@ -9,7 +9,7 @@ __author__ = 'Ralph Seichter'
 import unittest
 
 import swagger_client
-from .base import TestCase, skipUnlessOnline, user_agent, chribba_id, eulynn_id
+from .base import TestCase, TestUser, skipUnlessOnline, user_agent, chribba_id, eulynn_id
 from bootini_star.esi import IdNameCache
 from swagger_client.rest import ApiException
 from bootini_star import app

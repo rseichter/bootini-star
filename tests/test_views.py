@@ -10,17 +10,17 @@ import time
 from flask.helpers import url_for
 import json
 from bootini_star import app
-from bootini_star.extensions import db
+from bootini_star.extensions import app_config, db, log
 from bootini_star.models import Character, User
-from .base import TestCase, skipUnlessOnline, chribba_id
-from .base import email, email2, email3, password, password2, password3
+from .base import TestCase, TestUser, skipUnlessOnline, chribba_id
+from .base import email, email2, email3, email4, password, password2, password3, password4, token4
 from .base import character_id, character_name, character_owner_hash
 from bootini_star.views import InvalidUsage, user_loader
 
 
 def add_user2():
     with app.app_context():
-        user = User(email=email2, password=password2, uuid=str(uuid4()))
+        user = TestUser(email=email2, password=password2, uuid=str(uuid4()))
         db.session.add(user)
         db.session.commit()
         return user
@@ -32,7 +32,7 @@ character_name3 = character_name + '3'
 
 def add_user3():
     with app.app_context():
-        user = User(email=email3, password=password3, uuid=str(uuid4()))
+        user = TestUser(email=email3, password=password3, uuid=str(uuid4()))
         db.session.add(user)
         db.session.commit()
         character = Character(
@@ -47,6 +47,15 @@ def add_user3():
             'refresh_token': 'bar'
         })
         db.session.add(character)
+        db.session.commit()
+        return user
+
+
+def add_user4():
+    with app.app_context():
+        user = TestUser(email=email4, password=password4, uuid=str(uuid4()),
+                        level=User.valid_levels['registered'], activation_token=token4)
+        db.session.add(user)
         db.session.commit()
         return user
 
@@ -142,8 +151,10 @@ class AllViews(TestCase):
         resp = self.logout()
         self.assertTrue(b'You are logged out' in resp.data)
 
+    @skipUnlessOnline
     def test_signup(self):
-        resp = self.signup(email2, password2, confirm=password2)
+        resp = self.signup(
+            app_config['SMTP_SENDER_ADDRESS'], password2, confirm=password2)
         self.assertTrue(b'Registration successful' in resp.data)
 
     def test_signup_mismatch(self):
@@ -293,6 +304,39 @@ class AllViews(TestCase):
                 url_for('bs.dashboard')
             )
 
+    def test_activate_unknown_email(self):
+        with app.app_context():
+            # log.info(resp)
+            self.assertRedirect(
+                self.app.get(url_for('bs.activate', email='bad', token='x')),
+                url_for('bs.index')
+            )
+
+    def test_activate_unknown_token(self):
+        add_user4()
+        with app.app_context():
+            self.assertRedirect(
+                self.app.get(
+                    url_for('bs.activate', email=email4, token='bad')),
+                url_for('bs.index')
+            )
+
+    def test_activate_unknown_email(self):
+        with app.app_context():
+            # log.info(resp)
+            self.assertRedirect(
+                self.app.get(url_for('bs.activate', email='bad', token='x')),
+                url_for('bs.index')
+            )
+
+    def test_activate_valid(self):
+        add_user4()
+        with app.app_context():
+            self.assertRedirect(
+                self.app.get(
+                    url_for('bs.activate', email=email4, token=token4)),
+                url_for('bs.login')
+            )
 
 if __name__ == "__main__":
     unittest.main()

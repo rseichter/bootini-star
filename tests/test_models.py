@@ -11,7 +11,7 @@ from bootini_star import app
 from bootini_star.extensions import db
 from bootini_star.models import character_loader
 from bootini_star.models import mssql_utcnow, mysql_utcnow, pg_utcnow
-from .base import TestCase, Character, User
+from .base import TestCase, TestUser, Character, User
 from .base import character_id, character_name
 from .base import email, uuid
 
@@ -42,14 +42,14 @@ class UserModel(TestCase):
 
     def test_duplicate_email(self):
         with app.app_context():
-            user = User(email, 'dummy', 'dummy')
+            user = TestUser(email, 'dummy', 'dummy')
             db.session.add(user)
             with self.assertRaises(IntegrityError):
                 db.session.commit()
 
     def test_duplicate_uuid(self):
         with app.app_context():
-            user = User('!' + email, 'dummy', uuid)
+            user = TestUser('!' + email, 'dummy', uuid)
             db.session.add(user)
             with self.assertRaises(IntegrityError):
                 db.session.commit()

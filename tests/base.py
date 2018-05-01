@@ -19,17 +19,21 @@ from flask.wrappers import Response
 
 user_agent = 'unittest/0.0.1'
 
-email = 'spam@python.org'
+email = 'spam@unittest.unittest'
 password = 'secret1'
 uuid = str(uuid4())
 
-email2 = 'ham@python.org'
+email2 = 'ham@unittest.unittest'
 password2 = 'secret2'
 uuid2 = str(uuid4())
 
-email3 = 'eggs@python.org'
-password3 = 'secret2'
+email3 = 'eggs@unittest.unittest'
+password3 = 'secret3'
 uuid3 = str(uuid4())
+
+email4 = 'monty@unittest.unittest'
+password4 = 'secret4'
+token4 = str(uuid4())
 
 character_id = 123
 character_name = 'Character ' + str(character_id)
@@ -59,6 +63,12 @@ skipUnlessOnline = unittest.skipUnless(ast.literal_eval(
     os.getenv('ONLINE_TESTS', 'False')), 'ONLINE_TESTS=False')
 
 
+class TestUser(User):
+
+    def __init__(self, email, password, uuid, level=User.valid_levels['default'], activation_token=None):
+        super().__init__(email, password, uuid, level=level, activation_token=activation_token)
+
+
 class TestCase(unittest.TestCase):
 
     def setUp(self):
@@ -70,7 +80,7 @@ class TestCase(unittest.TestCase):
 
         with app.app_context():
             db.create_all()
-            user = User(email, password, uuid)
+            user = TestUser(email, password, uuid)
             db.session.add(user)
             character = Character(id=character_id, name=character_name,
                                   owner_hash=character_owner_hash, owner=uuid)

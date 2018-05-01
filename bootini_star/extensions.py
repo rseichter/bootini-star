@@ -12,6 +12,8 @@ logging.basicConfig(level=logging.WARNING)
 log = logging.getLogger('bootini_star')
 log.setLevel(logging.INFO)
 
+app_config = {}
+
 login_manager = LoginManager()
 
 db = SQLAlchemy()
