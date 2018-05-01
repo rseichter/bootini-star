@@ -143,7 +143,7 @@ class Character(db.Model):
     # Each EVE character is owned by an application user.
     owner = Column(String(40), ForeignKey('users.uuid'), nullable=False)
     # Use ESI character ID as primary key.
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=False)
     name = Column(String(100), nullable=False, unique=True)
     owner_hash = Column(String(50), nullable=False)
     # SSO authentication token data

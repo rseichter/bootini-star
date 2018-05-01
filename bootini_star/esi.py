@@ -18,7 +18,7 @@ class EveGroup(db.Model):
     not manually constructed.
     """
     __tablename__ = "groups"
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=False)
     name = Column(Text)
     eve_types = relationship('EveType', backref='group', lazy=True)
 
@@ -31,7 +31,7 @@ class EveType(db.Model):
     not manually constructed.
     """
     __tablename__ = "types"
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=False)
     groupid = Column(BigInteger, ForeignKey('groups.id'), nullable=False)
     name = Column(Text)
     description = Column(Text)
@@ -40,7 +40,7 @@ class EveType(db.Model):
 class Cache(db.Model):
     """Cache ID-name pairs."""
     __tablename__ = "cache"
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=False)
     name = Column(String(100), nullable=False)
     expires = Column(DateTime)
 
