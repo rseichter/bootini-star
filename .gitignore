@@ -103,6 +103,8 @@ ENV/
 # Ralph's additions
 *.png
 *.svg
+*.webmanifest
+browserconfig.xml
 favicon*
 venv.sh
 venv/

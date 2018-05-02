@@ -15,6 +15,7 @@ from flask_migrate import Migrate, migrate
 from flask_sqlalchemy import SQLAlchemy
 
 from .extensions import app_config, db, login_manager
+from .resource_views import StaticFileConverter, blueprint as res_blueprint
 from .sso_views import blueprint as sso_blueprint
 from .views import blueprint as bs_blueprint
 
@@ -33,6 +34,8 @@ login_manager.blueprint_login_views = {
     sso_blueprint.name: 'bs.login'
 }
 
+app.url_map.converters['static'] = StaticFileConverter
+app.register_blueprint(res_blueprint)
 app.register_blueprint(bs_blueprint)
 app.register_blueprint(sso_blueprint)
 
