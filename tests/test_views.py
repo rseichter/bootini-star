@@ -139,8 +139,7 @@ class AllViews(TestCase):
     def test_good_login(self):
         add_user2()
         resp = self.login(email2, password2)
-        msg = 'This is the dashboard of ' + email2
-        self.assertTrue(bytearray(msg, 'utf-8') in resp.data)
+        self.assertTrue(b'Should you ever want' in resp.data)
 
     def test_unsafe_target(self):
         add_user2()
@@ -183,8 +182,7 @@ class AllViews(TestCase):
         self.login(email2, password2)
         with app.app_context():
             resp = self.app.get(url_for('bs.dashboard'))
-        msg = 'This is the dashboard of ' + email2
-        self.assertTrue(bytearray(msg, 'utf-8') in resp.data)
+        self.assertTrue(b'Should you ever want' in resp.data)
 
     def test_maillist_invalid_id(self):
         # Not a valid EVE character ID.

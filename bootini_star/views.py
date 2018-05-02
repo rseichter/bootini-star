@@ -58,7 +58,7 @@ class RenderTemplate(View):
         self.template = template
 
     def dispatch_request(self):
-        return render_template(self.template)
+        return render_template(self.template, config=app_config)
 
 
 class Signup(MethodView):
@@ -155,7 +155,8 @@ class Dashboard(MethodView):
             'dashboard.html',
             characters=sorted(characters, key=attrgetter('name')),
             auth_url=auth_url,
-            auth_state=auth_state
+            auth_state=auth_state,
+            config=app_config
         )
 
 

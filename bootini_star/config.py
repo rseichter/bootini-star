@@ -5,7 +5,9 @@ should be overridden by using these env variables.
 """
 __author__ = 'Ralph Seichter'
 
+import logging
 import os
+from .extensions import log
 
 BAD = 'bad'
 DEVELOPMENT_DB_URI = 'postgresql://postgres:@localhost/bs'
@@ -19,6 +21,7 @@ class Config(object):
     If you need to change settings like ESI_CALLBACK_URI to address
     local requirements, use environment variables.
     """
+    LOG_LEVEL = os.getenv('LOG_LEVEL', 'WARNING')
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
     SMTP_SERVER_URI = os.getenv('SMTP_SERVER_URI', '')
     SMTP_SENDER_ADDRESS = os.getenv('SMTP_SENDER_ADDRESS', '')

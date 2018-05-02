@@ -6,6 +6,7 @@ This project was started on 2018-04-20 by Ralph Seichter.
 """
 __author__ = 'Ralph Seichter'
 
+import logging
 import os
 import re
 
@@ -14,7 +15,7 @@ from flask.views import MethodView
 from flask_migrate import Migrate, migrate
 from flask_sqlalchemy import SQLAlchemy
 
-from .extensions import app_config, db, login_manager
+from .extensions import app_config, db, log, login_manager
 from .resource_views import StaticFileConverter, blueprint as res_blueprint
 from .sso_views import blueprint as sso_blueprint
 from .views import blueprint as bs_blueprint
@@ -23,6 +24,14 @@ app = Flask(__name__)
 # Development configuration settings are the default.
 app_settings = os.getenv('APP_SETTINGS', 'bootini_star.config.Development')
 app.config.from_object(app_settings)
+app_config.update(app.config)
+
+# Set logging level
+ls = app_config['LOG_LEVEL'].upper()
+ln = getattr(logging, ls, None)
+if not isinstance(ln, int):
+    raise ValueError("Invalid LOG_LEVEL '%s'" % ls)
+log.setLevel(ln)
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -38,8 +47,6 @@ app.url_map.converters['static'] = StaticFileConverter
 app.register_blueprint(res_blueprint)
 app.register_blueprint(bs_blueprint)
 app.register_blueprint(sso_blueprint)
-
-app_config.update(app.config)
 
 _re_flags = re.RegexFlag.MULTILINE
 _div_pat = re.compile(r'<div>(.*?)</div>', flags=_re_flags)
