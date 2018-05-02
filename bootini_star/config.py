@@ -19,6 +19,7 @@ class Config(object):
     If you need to change settings like ESI_CALLBACK_URI to address
     local requirements, use environment variables.
     """
+    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
     SMTP_SERVER_URI = os.getenv('SMTP_SERVER_URI', '')
     SMTP_SENDER_ADDRESS = os.getenv('SMTP_SENDER_ADDRESS', '')
     SECRET_KEY = os.getenv('SECRET_KEY', BAD)
@@ -31,13 +32,12 @@ class Config(object):
     ESI_TOKEN_URI = OAUTH_BASE + 'token'
     ESI_VERIFY_URI = OAUTH_BASE + 'verify'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    DEBUG = False
-    TESTING = False
 
 
 class Development(Config):
     """Enable debugging during development."""
     DEBUG = True
+    TESTING = False
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_DATABASE_URI = DEVELOPMENT_DB_URI
 
@@ -52,5 +52,5 @@ class Testing(Config):
 
 class Production(Config):
     """Use environment variables to define your production settings."""
-    SQLALCHEMY_DATABASE_URI = 'your_db_uri'
-    ESI_CALLBACK_URI = 'your_callback_uri'
+    DEBUG = False
+    TESTING = False
