@@ -249,6 +249,7 @@ class RemoveMail(MethodView):
             try:
                 api.delete_characters_character_id_mail_mail_id(
                     character_id, mail_id)
+                flash('Mail has been deleted.', 'success')
             except ApiException as e:
                 return api_fail(e)
             return redirect(url_for('.maillist', character_id=character_id))

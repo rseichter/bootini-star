@@ -101,5 +101,8 @@ ENV/
 .mypy_cache/
 
 # Ralph's additions
+*.png
+*.svg
+favicon*
 venv.sh
 venv/
