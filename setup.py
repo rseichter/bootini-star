@@ -21,7 +21,7 @@ setup(
                                             'db-static/groups.sql.bz2', 'db-static/types.sql.bz2']),
                 ],
     install_requires=[
-        'Flask >= 0.12.2',
+        'Flask >= 1.0.2',
         'Flask-Login >= 0.4.1',
         'Flask-Migrate >= 2.1.1',
         'Flask-SQLAlchemy >= 2.3.2',
