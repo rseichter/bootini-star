@@ -336,5 +336,10 @@ class AllViews(TestCase):
                 url_for('bs.login')
             )
 
+    def test_invalid_usage(self):
+        iu = InvalidUsage('message', 456)
+        with self.assertRaises(InvalidUsage):
+            raise iu
+
 if __name__ == "__main__":
     unittest.main()
