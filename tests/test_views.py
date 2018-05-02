@@ -337,9 +337,11 @@ class AllViews(TestCase):
             )
 
     def test_invalid_usage(self):
-        iu = InvalidUsage('message', 456)
-        with self.assertRaises(InvalidUsage):
-            raise iu
+        try:
+            raise InvalidUsage(password, status_code=432)
+        except InvalidUsage as e:
+            self.assertEqual(e.message, password)
+            self.assertEqual(e.status_code, 432)
 
 if __name__ == "__main__":
     unittest.main()
