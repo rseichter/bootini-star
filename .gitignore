@@ -104,6 +104,8 @@ ENV/
 *.png
 *.svg
 *.webmanifest
+.idea/
+.settings/
 browserconfig.xml
 favicon*
 venv.sh
