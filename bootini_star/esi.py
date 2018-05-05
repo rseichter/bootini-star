@@ -4,9 +4,10 @@ database entries like EVE item groups and types.
 """
 __author__ = 'Ralph Seichter'
 
-import swagger_client
-from sqlalchemy import Column, DateTime, String, Text, BigInteger, ForeignKey
+from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import relationship
+
+import swagger_client
 from .extensions import db, log
 
 

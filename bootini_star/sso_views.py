@@ -3,12 +3,11 @@ Callback view for EVE SSO.
 """
 __author__ = 'Ralph Seichter'
 
-from flask import Blueprint, request, redirect, url_for
+import flask_login
+from flask import Blueprint, redirect, request, url_for
 from flask.helpers import flash
-from flask.templating import render_template
 from flask.views import MethodView
 from flask_login import current_user
-import flask_login
 
 from .extensions import db
 from .models import Character
@@ -26,8 +25,10 @@ class Callback(MethodView):
         except:
             flash('Error obtaining authentication token.', 'danger')
             return redirect(url_for('bs.dashboard'))
-        ''' The rest of this method is not covered by automated unit tests because it
-            would require user interaction to authorize a character using EVE SSO. '''
+        """
+        The rest of this method is not covered by automated unit tests because
+        it would require user interaction to authorise a character.
+        """
         resp = es.auth_verify()  # pragma: no cover
         if (resp.ok):  # pragma: no cover
             json = resp.json()

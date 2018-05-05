@@ -20,7 +20,7 @@ scope = [
 
 
 def token_updater(x):  # pragma: no cover
-    ''' Only used for debugging '''
+    """Only used for debugging"""
     log.debug('*** Entering token_updater')
     log.debug(x.reason)
     log.debug(vars(x.request))
@@ -28,9 +28,10 @@ def token_updater(x):  # pragma: no cover
 
 
 class EveSso(OAuth2Session):
-    ''' Some code in this class is not covered by automated unit tests because it
-        would require user interaction to authorize a character using EVE SSO. '''
-
+    """
+    Some code in this class is not covered by automated unit tests because it
+    would require user interaction to authorize a character using EVE SSO.
+    """
     config = Config()
     # Required when refreshing by CCP's ESI
     refresh_kwargs = {

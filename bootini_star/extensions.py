@@ -4,6 +4,7 @@ Defining some objects here avoids circular imports.
 __author__ = 'Ralph Seichter'
 
 import logging
+
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from passlib.context import CryptContext

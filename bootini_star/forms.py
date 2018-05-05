@@ -4,23 +4,25 @@ Flask forms for logging in and signing up.
 __author__ = 'Ralph Seichter'
 
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, SubmitField, StringField
-from wtforms.validators import DataRequired
+from wtforms import PasswordField, StringField, SubmitField
+from wtforms.validators import DataRequired, Email, EqualTo
 
 
 class LoginForm(FlaskForm):
-    email = StringField(
-        u'E-Mail', validators=[DataRequired(message='We need your e-mail address.')])
-    password = PasswordField(u'Password', validators=[
-                             DataRequired(message='No password, no login.')])
-    submit = SubmitField(u'Login')
+    email = StringField('Email address', validators=[
+        Email(message='Valid email address is required.')])
+    password = PasswordField('Password', validators=[
+        DataRequired('Password is required.')])
+    submit = SubmitField('Login')
 
 
 class SignupForm(FlaskForm):
-    email = StringField(
-        u'E-Mail', validators=[DataRequired(message='We need your e-mail address.')])
-    password = PasswordField(u'Password', validators=[
-                             DataRequired(message='No password, no login.')])
-    confirm = PasswordField(u'Confirm password', validators=[
-                            DataRequired(message='Must match your password.')])
-    submit = SubmitField(u'Sign me up')
+    email = StringField('Email address', validators=[
+        Email(message='Valid email address is required.')])
+    password = PasswordField('Password', validators=[
+        DataRequired('Password is required.')])
+    confirm = PasswordField('Confirm password', validators=[
+        DataRequired('Password confirmation is required.'),
+        EqualTo('password', message='Password and confirmation must match.')
+    ])
+    submit = SubmitField('Sign me up')

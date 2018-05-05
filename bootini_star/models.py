@@ -6,7 +6,8 @@ __author__ = 'Ralph Seichter'
 import json
 
 import flask_login
-from sqlalchemy import Column, DateTime, String, BigInteger, SmallInteger, ForeignKey
+from sqlalchemy import BigInteger, Column, DateTime
+from sqlalchemy import ForeignKey, SmallInteger, String
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression
@@ -76,7 +77,8 @@ class User(db.Model, flask_login.UserMixin):
     activation_token = Column(String(40))
     eve_characters = relationship('Character', backref='user', lazy=True)
 
-    def __init__(self, email, password, uuid, level=None, activation_token=None):
+    def __init__(self, email, password, uuid, level=None,
+                 activation_token=None):
         self.email = email
         self.password = pwd_context.hash(password)
         self.uuid = uuid

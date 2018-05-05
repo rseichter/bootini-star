@@ -7,8 +7,9 @@ import re
 import smtplib
 from email.message import EmailMessage
 from email.utils import localtime
-from uuid import uuid4
 from urllib.parse import urlparse
+from uuid import uuid4
+
 import bootini_star
 from .extensions import app_config, log
 

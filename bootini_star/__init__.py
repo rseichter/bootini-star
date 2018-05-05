@@ -11,9 +11,7 @@ import os
 import re
 
 from flask import Flask
-from flask.views import MethodView
-from flask_migrate import Migrate, migrate
-from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 from .extensions import app_config, db, log, login_manager
 from .resource_views import StaticFileConverter, blueprint as res_blueprint

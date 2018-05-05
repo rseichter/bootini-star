@@ -5,9 +5,7 @@ should be overridden by using these env variables.
 """
 __author__ = 'Ralph Seichter'
 
-import logging
 import os
-from .extensions import log
 
 BAD = 'bad'
 DEVELOPMENT_DB_URI = 'postgresql://postgres:@localhost/bs'
@@ -51,6 +49,7 @@ class Testing(Config):
     TESTING = True
     SERVER_NAME = 'Argon.local'
     SQLALCHEMY_DATABASE_URI = TEST_DB_URI
+    WTF_CSRF_ENABLED = False
 
 
 class Production(Config):

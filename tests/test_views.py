@@ -1,21 +1,24 @@
 """
 Tests for the application's views/routes.
 """
+import sqlalchemy
+
 __author__ = 'Ralph Seichter'
 
 import unittest
-import werkzeug
 from uuid import uuid4
 import time
 from flask.helpers import url_for
 import json
 from bootini_star import app
-from bootini_star.extensions import app_config, db, log
+from bootini_star.extensions import app_config, db
 from bootini_star.models import Character, User
 from .base import TestCase, TestUser, skipUnlessOnline, chribba_id
-from .base import email, email2, email3, email4, password, password2, password3, password4, token4
+from .base import email, email2, email3, email4
+from .base import password, password2, password3, password4, token4
 from .base import character_id, character_name, character_owner_hash
 from bootini_star.views import InvalidUsage, user_loader
+from sqlalchemy.exc import IntegrityError
 
 
 def add_user2():
@@ -54,7 +57,8 @@ def add_user3():
 def add_user4():
     with app.app_context():
         user = TestUser(email=email4, password=password4, uuid=str(uuid4()),
-                        level=User.valid_levels['registered'], activation_token=token4)
+                        level=User.valid_levels['registered'],
+                        activation_token=token4)
         db.session.add(user)
         db.session.commit()
         return user
@@ -70,7 +74,8 @@ class AllViews(TestCase):
         with app.app_context():
             return self.app.post(url_for('bs.signup'),
                                  data=dict(
-                                     email=email, password=password, confirm=confirm),
+                                     email=email, password=password,
+                                     confirm=confirm),
                                  follow_redirects=True)
 
     def login(self, email, password, target=None):
@@ -78,7 +83,9 @@ class AllViews(TestCase):
             url = url_for('bs.login')
             if target:
                 url = url + '?next=' + target
-            return self.app.post(url, data=dict(email=email, password=password), follow_redirects=True)
+            return self.app.post(url,
+                                 data=dict(email=email, password=password),
+                                 follow_redirects=True)
 
     def logout(self):
         with app.app_context():
@@ -147,6 +154,8 @@ class AllViews(TestCase):
             resp = self.login(email2, password2, target=r'http://python.org')
 
     def test_logout(self):
+        add_user2()
+        self.login(email2, password2)
         resp = self.logout()
         self.assertTrue(b'You are logged out' in resp.data)
 
@@ -158,20 +167,20 @@ class AllViews(TestCase):
 
     def test_signup_mismatch(self):
         resp = self.signup(email2, password2, confirm="not" + password2)
-        self.assertTrue(b'Passwords do not match' in resp.data)
+        self.assertTrue(b'Password and confirmation must match' in resp.data)
 
     def test_signup_incomplete(self):
         resp = self.signup(email2, password2)
-        self.assertTrue(b'Please fill all fields' in resp.data)
+        self.assertTrue(b'Password confirmation is required' in resp.data)
 
     def test_signup_bad_email(self):
-        resp = self.signup('a@b.c', password2)
-        self.assertTrue(b'Please enter a valid email' in resp.data)
+        resp = self.signup('a@b', password2, password2)
+        self.assertTrue(b'Valid email address is required' in resp.data)
 
     def test_signup_existing(self):
         add_user2()
-        resp = self.signup(email2, password2, password2)
-        self.assertTrue(b'This address is already registered' in resp.data)
+        with self.assertRaises(sqlalchemy.exc.IntegrityError):
+            self.signup(email2, password2, password2)
 
     def test_load_unknown_user(self):
         # No user has been created yet
@@ -342,6 +351,7 @@ class AllViews(TestCase):
         except InvalidUsage as e:
             self.assertEqual(e.message, password)
             self.assertEqual(e.status_code, 432)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,11 +1,13 @@
 """
 Tests for EVE SSO views (login, callback).
 """
+
 __author__ = 'Ralph Seichter'
 
 import unittest
 
 from flask.helpers import url_for
+
 from bootini_star import app
 from .base import TestCase
 from .base import email, password

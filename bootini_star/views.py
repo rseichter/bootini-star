@@ -7,23 +7,23 @@ __author__ = 'Ralph Seichter'
 import json
 import re
 from operator import attrgetter
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urljoin, urlparse
 from uuid import uuid4
 
-from flask import Blueprint, flash, request, redirect, abort, url_for
+import flask_login
+from flask import Blueprint, flash, redirect, request, url_for
 from flask.templating import render_template
 from flask.views import MethodView, View
-import flask_login
 from flask_login.utils import current_user
 
-from .esi import IdNameCache
+import swagger_client
+from swagger_client.rest import ApiException
 from .email import RegistrationMail
+from .esi import IdNameCache
 from .extensions import app_config, db, log, login_manager, pwd_context
 from .forms import LoginForm, SignupForm
 from .models import User, character_list_loader, user_loader
 from .sso import EveSso
-import swagger_client
-from swagger_client.rest import ApiException
 
 eveCache = IdNameCache()
 
@@ -49,7 +49,8 @@ def is_safe_url(target):
     target_url = urlparse(urljoin(request.host_url, target))
     log.debug('ref netloc: ' + ref_url.netloc)
     log.debug('target netloc: ' + target_url.netloc)
-    return (target_url.scheme in ('http', 'https')) and ref_url.netloc.casefold() == target_url.netloc.casefold()
+    return (target_url.scheme in ('http',
+                                  'https')) and ref_url.netloc.casefold() == target_url.netloc.casefold()
 
 
 class RenderTemplate(View):
@@ -68,31 +69,30 @@ class Signup(MethodView):
         return render_template('signup.html', form=SignupForm())
 
     def post(self):
-        email = request.form['email'].strip()
-        password = request.form['password']
-        confirm = request.form['confirm']
-        if not re.search(r'\w\@[\w-]{2,}\.\w{2,}', email):
-            flash('Please enter a valid email address.', 'warning')
-            return redirect(url_for('.signup'))
-        if not (email and password and confirm):
-            flash('Please fill all fields.', 'warning')
-            return redirect(url_for('.signup'))
-        if password != confirm:
-            flash('Passwords do not match.', 'warning')
-            return redirect(url_for('.signup'))
-        if user_loader(email):
-            flash('This address is already registered.', 'warning')
-            return redirect(url_for('.signup'))
+        form = SignupForm()
+        if not form.validate_on_submit():
+            flash_form_errors(form)
+            return render_template('signup.html', form=form)
+        email = form.email.data.strip()
+        password = form.password.data
         token = str(uuid4())
         user = User(email, password, str(uuid4()), level=User.valid_levels[
-                    'registered'], activation_token=token)
+            'registered'], activation_token=token)
         db.session.add(user)
         db.session.commit()
         headers = {'From': app_config['SMTP_SENDER_ADDRESS'], 'To': email}
         RegistrationMail().send(headers, url_for(
             '.activate', _external=True, email=email, token=token))
-        flash('Registration successful. Please check your inbox for an activation email.', 'success')
+        flash(
+            'Registration successful. Please check your inbox for an activation email.',
+            'success')
         return redirect(url_for('.index'))
+
+
+def flash_form_errors(form):
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(error, 'danger')
 
 
 class Activate(MethodView):
@@ -121,6 +121,10 @@ class Login(MethodView):
         return render_template('login.html', form=LoginForm())
 
     def post(self):
+        form = LoginForm()
+        if not form.validate_on_submit():
+            flash_form_errors(form)
+            return render_template('login.html', form=form)
         user = request_loader(request)
         if user:
             flask_login.login_user(user)
@@ -138,6 +142,7 @@ class Login(MethodView):
 class Logout(MethodView):
     methods = ['GET']
 
+    @flask_login.login_required
     def get(self):
         flask_login.logout_user()
         flash('You are logged out.', 'success')
@@ -204,7 +209,9 @@ class MailList(MethodView):
             try:
                 rv = api.get_characters_character_id_mail(character_id)
                 return render_template('maillist.html', eveCache=eveCache,
-                                       character_id=character_id, maillist=sorted(rv, key=attrgetter('timestamp'), reverse=True))
+                                       character_id=character_id,
+                                       maillist=sorted(rv, key=attrgetter(
+                                           'timestamp'), reverse=True))
             except ApiException as e:
                 return api_fail(e)
         else:
@@ -286,7 +293,9 @@ class Skills(MethodView):
             try:
                 rv = api.get_characters_character_id_skillqueue(character_id)
                 return render_template('skillqueue.html', eveCache=eveCache,
-                                       character_id=character_id, skillq=sorted(rv, key=attrgetter('queue_position')))
+                                       character_id=character_id,
+                                       skillq=sorted(rv, key=attrgetter(
+                                           'queue_position')))
             except ApiException as e:
                 return api_fail(e)
         else:
@@ -317,13 +326,13 @@ blueprint.add_url_rule('/skillqueue/<int:character_id>',
 
 
 @login_manager.request_loader
-def request_loader(request):
-    email = request.form.get('email')
+def request_loader(req):
+    email = req.form.get('email')
     user = user_loader(email)
     if user:
         if user.may_login():
-            if request.form['password']:
-                if pwd_context.verify(request.form['password'], user.password):
+            if req.form['password']:
+                if pwd_context.verify(req.form['password'], user.password):
                     log.info("User '%s' (level %d) logged in" %
                              (user.email, user.level))
                     return user

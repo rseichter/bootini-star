@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='Bootini-Star',
-    version='0.0.1.dev5',
+    version='0.0.1.dev6',
     description="Inspect EVE Online mail and skill queues in a web browser.",
     long_description=("Inspect EVE Online mail and skill queues in a web"
                       " browser. Inspired by CCP's discontinued EVE Gate"
