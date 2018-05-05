@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/rseichter/bootini-star.svg?branch=master)](https://travis-ci.org/rseichter/bootini-star)
+
 # What is Bootini Star?
 
 If you miss CCP's discontinued EVE Gate application, Bootini Star--abbreviated
