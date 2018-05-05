@@ -10,15 +10,15 @@ from email.utils import localtime
 from urllib.parse import urlparse
 from uuid import uuid4
 
-import bootini_star
 from .extensions import app_config, log
 
 
 class _Mail(object):
+    pat = re.compile(r'\w@[\w-]{2,}\.\w{2,}')
 
     def _parse_config(self):
         u = urlparse(app_config['SMTP_SERVER_URI'])
-        if not u.scheme in ['smtp', 'tls']:
+        if u.scheme not in ['smtp', 'tls']:
             raise ValueError('SMTP_SERVER_URI missing or scheme unknown')
         self.scheme = u.scheme
         self.host = u.hostname
@@ -32,7 +32,7 @@ class _Mail(object):
         else:
             self.username = None
         self.address = app_config['SMTP_SENDER_ADDRESS']
-        if re.search(bootini_star.email_pat, self.address):
+        if re.search(self.pat, self.address):
             return
         raise ValueError('SMTP_SENDER_ADDRESS missing or malformed')
 

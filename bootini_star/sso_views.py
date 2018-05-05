@@ -30,7 +30,7 @@ class Callback(MethodView):
         it would require user interaction to authorise a character.
         """
         resp = es.auth_verify()  # pragma: no cover
-        if (resp.ok):  # pragma: no cover
+        if resp.ok:  # pragma: no cover
             json = resp.json()
             character = Character(
                 current_user.uuid,

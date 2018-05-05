@@ -45,22 +45,24 @@ class Cache(db.Model):
     name = Column(String(100), nullable=False)
     expires = Column(DateTime)
 
-    def __init__(self, id, name):
-        self.id = id
+    def __init__(self, entry_id, name):
+        self.id = entry_id
         self.name = name
 
 
-class CacheBase():
+class CacheBase:
     """Base class for handling Cache objects."""
 
-    def get_cached(self, entry_id):
+    @staticmethod
+    def get_cached(entry_id):
         ce = Cache.query.filter_by(id=entry_id).first()
         if ce:
             log.debug('Found ID ' + str(entry_id) + ' in cache')
             return ce
         return None
 
-    def add(self, entry_id, entry_name):
+    @staticmethod
+    def add(entry_id, entry_name):
         ce = Cache(entry_id, entry_name)
         log.debug('Adding ID ' + str(entry_id) + ' to cache')
         db.session.add(ce)
@@ -86,7 +88,8 @@ class IdNameCache(CacheBase):
         rv = api.get_characters_character_id(char_id)
         return self.add(char_id, rv._name)
 
-    def eve_type(self, type_id):
+    @staticmethod
+    def eve_type(type_id):
         """
         Return the EVE type for a given ID.
 

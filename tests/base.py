@@ -82,8 +82,8 @@ class TestCase(unittest.TestCase):
             db.create_all()
             user = TestUser(email, password, uuid)
             db.session.add(user)
-            character = Character(id=character_id, name=character_name,
-                                  owner_hash=character_owner_hash, owner=uuid)
+            character = Character(uuid, character_id,
+                                  character_name, character_owner_hash)
             character.token_str = json.dumps({
                 'access_token': 'foo',
                 'expires_at': time.time() + 600,  # Expires in 10 minutes

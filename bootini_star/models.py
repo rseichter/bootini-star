@@ -8,6 +8,7 @@ import json
 import flask_login
 from sqlalchemy import BigInteger, Column, DateTime
 from sqlalchemy import ForeignKey, SmallInteger, String
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import expression
@@ -15,12 +16,12 @@ from sqlalchemy.sql import expression
 from .extensions import db, log, login_manager, pwd_context
 
 
-class utcnow(expression.FunctionElement):
+class UtcNow(expression.FunctionElement):
     """Used by SQLAlchemy."""
     type = DateTime()
 
 
-@compiles(utcnow, 'postgresql')
+@compiles(UtcNow, 'postgresql')
 def pg_utcnow(element, compiler, **kwargs):
     """
     Return statement representing 'UTC now' in PostgreSQL dialect.
@@ -29,7 +30,7 @@ def pg_utcnow(element, compiler, **kwargs):
     return "TIMEZONE('utc', CURRENT_TIMESTAMP)"
 
 
-@compiles(utcnow, 'mssql')
+@compiles(UtcNow, 'mssql')
 def mssql_utcnow(element, compiler, **kwargs):
     """
     Return statement representing 'UTC now' in Microsoft SQL Server dialect.
@@ -38,7 +39,7 @@ def mssql_utcnow(element, compiler, **kwargs):
     return 'GETUTCDATE()'
 
 
-@compiles(utcnow, 'mysql')
+@compiles(UtcNow, 'mysql')
 def mysql_utcnow(element, compiler, **kwargs):
     """
     Return statement representing 'UTC now' in MySQL dialect.
@@ -72,7 +73,7 @@ class User(db.Model, flask_login.UserMixin):
     email = Column(String(100), primary_key=True, nullable=False)
     password = Column(String(250), nullable=False)
     uuid = Column(String(40), nullable=False, unique=True)
-    registered_at = Column(DateTime, nullable=False, server_default=utcnow())
+    registered_at = Column(DateTime, nullable=False, server_default=UtcNow())
     level = Column(SmallInteger, nullable=False)
     activation_token = Column(String(40))
     eve_characters = relationship('Character', backref='user', lazy=True)
@@ -118,7 +119,7 @@ def user_loader(email):
     """Load user from DB, return None if not found."""
     try:
         return User.query.filter_by(email=email).first()
-    except:
+    except SQLAlchemyError:
         return None
 
 
@@ -131,8 +132,8 @@ class Character(db.Model):
     :type owner: str
     :param owner: Owner's UUID.
 
-    :type id: int
-    :param id: Character ID.
+    :type char_id: int
+    :param char_id: Character ID.
 
     :type name: str
     :param name: Character name.
@@ -151,9 +152,9 @@ class Character(db.Model):
     # SSO authentication token data
     token_str = Column('token', String(500))
 
-    def __init__(self, owner, id, name, owner_hash):
+    def __init__(self, owner, char_id, name, owner_hash):
         self.owner = owner
-        self.id = id
+        self.id = char_id
         self.name = name
         self.owner_hash = owner_hash
 
@@ -171,12 +172,12 @@ class Character(db.Model):
         return json.loads(self.token_str)
 
 
-def character_loader(id, **kwargs):
+def character_loader(char_id, **kwargs):
     """Load a Character object."""
     try:
-        log.debug('Load character ID=' + str(id))
-        return Character.query.filter_by(id=id, **kwargs).first()
-    except:
+        log.debug('Load character ID=' + str(char_id))
+        return Character.query.filter_by(id=char_id, **kwargs).first()
+    except SQLAlchemyError:
         return None
 
 

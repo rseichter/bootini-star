@@ -38,12 +38,8 @@ def add_user3():
         user = TestUser(email=email3, password=password3, uuid=str(uuid4()))
         db.session.add(user)
         db.session.commit()
-        character = Character(
-            owner=user.uuid,
-            id=character_id3,
-            name=character_name3,
-            owner_hash=character_owner_hash
-        )
+        character = Character(user.uuid, character_id3,
+                              character_name3, character_owner_hash)
         character.token_str = json.dumps({
             'access_token': 'foo',
             'expires_at': time.time() - 600,  # Expired 10 minutes ago
@@ -183,8 +179,8 @@ class AllViews(TestCase):
             self.signup(email2, password2, password2)
 
     def test_load_unknown_user(self):
-        # No user has been created yet
-        self.assertIsNone(user_loader(email2))
+        with app.app_context():
+            self.assertIsNone(user_loader(email2))
 
     def test_dashboard(self):
         add_user2()
@@ -194,7 +190,6 @@ class AllViews(TestCase):
         self.assertTrue(b'Should you ever want' in resp.data)
 
     def test_maillist_invalid_id(self):
-        # Not a valid EVE character ID.
         add_user2()
         self.login(email2, password2)
         with app.app_context():

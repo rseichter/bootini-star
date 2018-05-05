@@ -5,7 +5,6 @@ combined into a Flask blueprint.
 __author__ = 'Ralph Seichter'
 
 import json
-import re
 from operator import attrgetter
 from urllib.parse import urljoin, urlparse
 from uuid import uuid4

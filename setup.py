@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='Bootini-Star',
-    version='0.0.1.dev6',
+    version='0.0.1.dev7',
     description="Inspect EVE Online mail and skill queues in a web browser.",
     long_description=("Inspect EVE Online mail and skill queues in a web"
                       " browser. Inspired by CCP's discontinued EVE Gate"
@@ -14,7 +14,7 @@ setup(
     author_email='bootini-star@seichter.de',
     url='https://github.com/rseichter/bootini-star.git',
     license='MIT',
-    python_requires='>=3.4',
+    python_requires='>=3.6',
     packages=find_packages(exclude=['tests', 'tmp', 'venv']),
     data_files=[('Bootini-Star', ['LICENSE', 'wsgi.py']),
                 ('Bootini-Star/db-static', ['db-static/db-helper.sh',
@@ -28,6 +28,9 @@ setup(
         'Flask-WTF >= 0.14.2',
         'passlib >= 1.7.1',
         'requests-oauthlib >= 0.8.0',
+        'SQLAlchemy >= 1.2.7',
+        'Werkzeug >= 0.14.1',
+        'WTForms >= 2.1',
     ],
     include_package_data=True,
     classifiers=[

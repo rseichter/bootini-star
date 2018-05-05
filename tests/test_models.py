@@ -86,7 +86,8 @@ class CharacterModel(TestCase):
             self.assertIsNone(character)
 
     def test_character_loader(self):
-        self.assertIsNone(character_loader(None))
+        with app.app_context():
+            self.assertIsNone(character_loader(None))
 
     def test_bad_owner(self):
         with app.app_context():
