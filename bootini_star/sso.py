@@ -68,6 +68,7 @@ class EveSso(OAuth2Session):
     def auth_verify(self):  # pragma: no cover (Not reached during tests)
         return self.get(self.config.ESI_VERIFY_URI)
 
+    # noinspection PyMethodOverriding
     def refresh_token(self, force_refresh=False):
         needs_refresh = False
         ea = self.token.get('expires_at')

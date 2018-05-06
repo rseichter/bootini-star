@@ -43,5 +43,6 @@ class Mail(unittest.TestCase):
             RegistrationMail().send(headers, url)
         app_config['SMTP_SERVER_URI'] = saved
 
+
 if __name__ == "__main__":
     unittest.main()

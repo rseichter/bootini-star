@@ -22,5 +22,6 @@ class Helpers(unittest.TestCase):
         html = '<a href="showinfo:0//321">ham</a>'
         self.assertEqual(showinfo_filter(html, '/ham/'), html)
 
+
 if __name__ == "__main__":
     unittest.main()

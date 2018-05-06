@@ -21,7 +21,7 @@
                                 {{ eveCache.eve_character(mail._from).name }}
                             </a>
                         <td>
-                            <a href="{{ url_for('bs.mail', args=[character_id, mail.mail_id]|join(',')) }}">
+                            <a href="{{ url_for('bs.mail', character_id=character_id, mail_id=mail.mail_id) }}">
                                 {{ mail.subject }}
                             </a>
                         </td>

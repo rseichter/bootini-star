@@ -13,7 +13,7 @@ from uuid import uuid4
 from .extensions import app_config, log
 
 
-class _Mail(object):
+class _Mail:
     pat = re.compile(r'\w@[\w-]{2,}\.\w{2,}')
 
     def _parse_config(self):

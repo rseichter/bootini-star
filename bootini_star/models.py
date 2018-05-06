@@ -4,6 +4,7 @@ Model classes and related helper functions. SQLAlchemy is used for ORM.
 __author__ = 'Ralph Seichter'
 
 import json
+from typing import Optional, Dict
 
 import flask_login
 from sqlalchemy import BigInteger, Column, DateTime
@@ -21,6 +22,7 @@ class UtcNow(expression.FunctionElement):
     type = DateTime()
 
 
+# noinspection PyUnusedLocal
 @compiles(UtcNow, 'postgresql')
 def pg_utcnow(element, compiler, **kwargs):
     """
@@ -30,6 +32,7 @@ def pg_utcnow(element, compiler, **kwargs):
     return "TIMEZONE('utc', CURRENT_TIMESTAMP)"
 
 
+# noinspection PyUnusedLocal
 @compiles(UtcNow, 'mssql')
 def mssql_utcnow(element, compiler, **kwargs):
     """
@@ -39,6 +42,7 @@ def mssql_utcnow(element, compiler, **kwargs):
     return 'GETUTCDATE()'
 
 
+# noinspection PyUnusedLocal
 @compiles(UtcNow, 'mysql')
 def mysql_utcnow(element, compiler, **kwargs):
     """
@@ -63,7 +67,7 @@ class User(db.Model, flask_login.UserMixin):
     """
     __tablename__ = "users"
 
-    valid_levels = {
+    valid_levels: Dict[str, int] = {
         'inactive': 0,
         'registered': 1,
         'default': 2,
@@ -86,7 +90,7 @@ class User(db.Model, flask_login.UserMixin):
         self.level = level if level else self.valid_levels['inactive']
         if activation_token:
             self.activation_token = activation_token
-        self.current_character = None
+        self._current_character = None
 
     # Required for flask_login
     def get_id(self):
@@ -98,12 +102,12 @@ class User(db.Model, flask_login.UserMixin):
 
     @property
     def current_character(self):
-        return self.__current_character
+        return self._current_character
 
     @current_character.setter
     def current_character(self, x):
         if not x or isinstance(x, Character):
-            self.__current_character = x
+            self._current_character = x
         else:
             raise TypeError("expected argument of type '" +
                             Character.__name__ + "', found '" + x.__class__.__name__ + "'.")
@@ -115,11 +119,11 @@ class User(db.Model, flask_login.UserMixin):
 
 
 @login_manager.user_loader
-def user_loader(email):
+def user_loader(email: str) -> Optional[User]:
     """Load user from DB, return None if not found."""
     try:
         return User.query.filter_by(email=email).first()
-    except SQLAlchemyError:
+    except SQLAlchemyError:  # pragma: no cover
         return None
 
 
@@ -172,12 +176,12 @@ class Character(db.Model):
         return json.loads(self.token_str)
 
 
-def character_loader(char_id, **kwargs):
+def character_loader(char_id: int, **kwargs) -> Optional[Character]:
     """Load a Character object."""
     try:
         log.debug('Load character ID=' + str(char_id))
         return Character.query.filter_by(id=char_id, **kwargs).first()
-    except SQLAlchemyError:
+    except SQLAlchemyError:  # pragma: no cover
         return None
 
 

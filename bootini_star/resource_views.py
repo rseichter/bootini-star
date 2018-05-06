@@ -18,7 +18,8 @@ class StaticFileConverter(BaseConverter):
 class StaticFile(MethodView):
     methods = ['GET']
 
-    def get(self, filename):
+    @staticmethod
+    def get(filename):
         return redirect(url_for('static', filename=filename))
 
 

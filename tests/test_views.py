@@ -147,13 +147,18 @@ class AllViews(TestCase):
     def test_unsafe_target(self):
         add_user2()
         with self.assertRaises(InvalidUsage):
-            resp = self.login(email2, password2, target=r'http://python.org')
+            self.login(email2, password2, target=r'http://python.org')
 
     def test_logout(self):
         add_user2()
         self.login(email2, password2)
         resp = self.logout()
         self.assertTrue(b'You are logged out' in resp.data)
+
+    def test_signup_get(self):
+        with app.app_context():
+            resp = self.app.get(url_for('bs.signup'))
+        self.assertTrue(b'Confirm password' in resp.data)
 
     @skipUnlessOnline
     def test_signup(self):
@@ -211,19 +216,20 @@ class AllViews(TestCase):
     def test_mail_invalid_char_id(self):
         self.login(email, password)
         with app.app_context(), self.assertRaises(ValueError):
-            self.app.get(url_for('bs.mail', args='bad,123'))
+            self.app.get(url_for('bs.mail', character_id='bad', mail_id=123))
 
     def test_mail_invalid_mail_id(self):
         self.login(email, password)
         with app.app_context(), self.assertRaises(ValueError):
-            self.app.get(url_for('bs.mail', args='123,bad'))
+            self.app.get(url_for('bs.mail', character_id=123, mail_id='bad'))
 
     def test_mail_valid_args(self):
         add_user2()
         self.login(email2, password2)
         with app.app_context():
             self.assertRedirect(
-                self.app.get(url_for('bs.mail', args='123,456')),
+                self.app.get(
+                    url_for('bs.mail', character_id=123, mail_id=456)),
                 url_for('bs.dashboard')
             )
 
@@ -232,7 +238,8 @@ class AllViews(TestCase):
         with app.app_context():
             self.assertRedirect(
                 self.app.get(
-                    url_for('bs.mail', args=str(character_id) + ',123')),
+                    url_for('bs.mail', character_id=character_id,
+                            mail_id=123)),
                 url_for('bs.index')
             )
 
@@ -242,7 +249,8 @@ class AllViews(TestCase):
         with app.app_context():
             self.assertRedirect(
                 self.app.get(
-                    url_for('bs.mail', args=str(character_id) + ',123')),
+                    url_for('bs.mail', character_id=character_id,
+                            mail_id=123)),
                 url_for('bs.dashboard')
             )
 
@@ -280,19 +288,20 @@ class AllViews(TestCase):
     def test_rm_mail_invalid_char_id(self):
         self.login(email, password)
         with app.app_context(), self.assertRaises(ValueError):
-            self.app.get(url_for('bs.rmmail', args='bad,123'))
+            self.app.get(url_for('bs.rmmail', character_id='bad', mail_id=123))
 
     def test_rm_mail_invalid_mail_id(self):
         self.login(email, password)
         with app.app_context(), self.assertRaises(ValueError):
-            self.app.get(url_for('bs.rmmail', args='123,bad'))
+            self.app.get(url_for('bs.rmmail', character_id=123, mail_id='bad'))
 
     def test_rm_mail_valid_args(self):
         add_user3()
         self.login(email3, password3)
         with app.app_context():
             self.assertRedirect(
-                self.app.get(url_for('bs.rmmail', args='123,456')),
+                self.app.get(
+                    url_for('bs.rmmail', character_id=123, mail_id=456)),
                 url_for('bs.dashboard')
             )
 
@@ -302,7 +311,8 @@ class AllViews(TestCase):
         with app.app_context():
             self.assertRedirect(
                 self.app.get(
-                    url_for('bs.rmmail', args=str(character_id) + ',123')),
+                    url_for('bs.rmmail', character_id=character_id,
+                            mail_id=456)),
                 url_for('bs.dashboard')
             )
 

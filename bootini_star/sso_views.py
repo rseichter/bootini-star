@@ -20,6 +20,7 @@ class Callback(MethodView):
     @flask_login.login_required
     def get(self):
         es = EveSso()
+        # noinspection PyBroadException,PyPep8
         try:
             auth_token = es.auth_token(request.args.get('code'))
         except:

@@ -8,12 +8,13 @@ __author__ = 'Ralph Seichter'
 
 import unittest
 
+from sqlalchemy.orm.exc import NoResultFound
+
 import swagger_client
-from .base import TestCase, TestUser, skipUnlessOnline, user_agent, chribba_id, eulynn_id
+from bootini_star import app
 from bootini_star.esi import IdNameCache
 from swagger_client.rest import ApiException
-from bootini_star import app
-from sqlalchemy.orm.exc import NoResultFound
+from .base import TestCase, chribba_id, eulynn_id, skipUnlessOnline, user_agent
 
 
 class ESI(TestCase):
@@ -37,6 +38,21 @@ class ESI(TestCase):
         with app.app_context():
             c = self.inCache.eve_character(chribba_id)
             self.assertEqual(c.name, 'Chribba')
+
+    @skipUnlessOnline
+    def test_eve_char_valid_ids(self):
+        ids = set([chribba_id, eulynn_id])
+        with app.app_context():
+            cs = self.inCache.eve_characters(ids)
+            self.assertEqual(len(ids), len(cs))
+            while cs:
+                c = cs.pop()
+                if c.id == chribba_id:
+                    self.assertEqual(c.name, 'Chribba')
+                elif c.id == eulynn_id:
+                    self.assertEqual(c.name, 'Eulynn')
+                else:
+                    self.fail('Unexpected ID: %d' % c.id)
 
     @skipUnlessOnline
     def test_eve_char_cached(self):

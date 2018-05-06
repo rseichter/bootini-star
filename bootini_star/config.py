@@ -12,7 +12,7 @@ DEVELOPMENT_DB_URI = 'postgresql://postgres:@localhost/bs'
 TEST_DB_URI = DEVELOPMENT_DB_URI + '_test'
 
 
-class Config(object):
+class Config:
     """
     Configuration object base class.
 

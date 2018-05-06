@@ -37,7 +37,7 @@ class InvalidUsage(Exception):
             self.status_code = status_code
         self.payload = payload
 
-    def to_dict(self):
+    def to_dict(self):  # pragma: no cover
         rv = dict(self.payload or ())
         rv['message'] = self.message
         return rv
@@ -64,10 +64,13 @@ class RenderTemplate(View):
 class Signup(MethodView):
     methods = ['GET', 'POST']
 
-    def get(self):
+    @staticmethod
+    def get():
         return render_template('signup.html', form=SignupForm())
 
-    def post(self):
+    # noinspection PyTypeChecker
+    @staticmethod
+    def post():
         form = SignupForm()
         if not form.validate_on_submit():
             flash_form_errors(form)
@@ -82,9 +85,8 @@ class Signup(MethodView):
         headers = {'From': app_config['SMTP_SENDER_ADDRESS'], 'To': email}
         RegistrationMail().send(headers, url_for(
             '.activate', _external=True, email=email, token=token))
-        flash(
-            'Registration successful. Please check your inbox for an activation email.',
-            'success')
+        flash('Registration successful, an activation email has been sent.',
+              'success')
         return redirect(url_for('.index'))
 
 
@@ -97,7 +99,8 @@ def flash_form_errors(form):
 class Activate(MethodView):
     methods = ['GET']
 
-    def get(self, email, token):
+    @staticmethod
+    def get(email, token):
         user = user_loader(email)
         if user and user.activation_token == token:
             user.activation_token = ''
@@ -107,8 +110,8 @@ class Activate(MethodView):
                 db.session.commit()
                 flash('Your account is now active, please login.', 'success')
                 return redirect(url_for('.login'))
-            except Exception as e:
-                log.error('Account activation failed: {0}'.format(e))
+            except Exception as e:  # pragma: no cover
+                log.error('Account activation failed: {}'.format(e))
         flash('Account activation failed.', 'danger')
         return redirect(url_for('.index'))
 
@@ -116,12 +119,15 @@ class Activate(MethodView):
 class Login(MethodView):
     methods = ['GET', 'POST']
 
-    def get(self):
+    @staticmethod
+    def get():
         return render_template('login.html', form=LoginForm())
 
-    def post(self):
+    # noinspection PyTypeChecker
+    @staticmethod
+    def post():
         form = LoginForm()
-        if not form.validate_on_submit():
+        if not form.validate_on_submit():  # pragma: no cover
             flash_form_errors(form)
             return render_template('login.html', form=form)
         user = request_loader(request)
@@ -206,11 +212,14 @@ class MailList(MethodView):
             api = swagger_client.MailApi()
             refresh_token(api, cc)
             try:
-                rv = api.get_characters_character_id_mail(character_id)
-                return render_template('maillist.html', eveCache=eveCache,
-                                       character_id=character_id,
-                                       maillist=sorted(rv, key=attrgetter(
-                                           'timestamp'), reverse=True))
+                from_ids = set()
+                maillist = api.get_characters_character_id_mail(character_id)
+                for mail in maillist:
+                    from_id = mail._from
+                    if from_id not in from_ids:
+                        from_ids.add(from_id)
+                eveCache.eve_characters(from_ids)
+                return render_template('maillist.html', eveCache=eveCache, character_id=character_id, maillist=sorted(maillist, key=attrgetter('timestamp'), reverse=True))
             except ApiException as e:
                 return api_fail(e)
         else:
@@ -222,10 +231,7 @@ class Mail(MethodView):
     methods = ['GET']
 
     @flask_login.login_required
-    def get(self, args):
-        x = args.split(',')
-        character_id = int(x[0])
-        mail_id = int(x[1])
+    def get(self, character_id: int, mail_id: int):
         cc = current_user.load_character(character_id)
         if cc:
             api = swagger_client.MailApi()
@@ -245,10 +251,7 @@ class RemoveMail(MethodView):
     methods = ['GET']
 
     @flask_login.login_required
-    def get(self, args):
-        x = args.split(',')
-        character_id = int(x[0])
-        mail_id = int(x[1])
+    def get(self, character_id: int, mail_id: int):
         cc = current_user.load_character(character_id)
         if cc:  # pragma: no cover (Needs valid tokens)
             api = swagger_client.MailApi()
@@ -315,8 +318,9 @@ blueprint.add_url_rule('/logout', view_func=Logout.as_view('logout'))
 blueprint.add_url_rule('/signup', view_func=Signup.as_view('signup'))
 blueprint.add_url_rule('/character/<int:character_id>',
                        view_func=Character.as_view('character'))
-blueprint.add_url_rule('/mail/<string:args>', view_func=Mail.as_view('mail'))
-blueprint.add_url_rule('/mail/rm/<string:args>',
+blueprint.add_url_rule(
+    '/mail/<int:character_id>/<int:mail_id>', view_func=Mail.as_view('mail'))
+blueprint.add_url_rule('/mail/rm/<int:character_id>/<int:mail_id>',
                        view_func=RemoveMail.as_view('rmmail'))
 blueprint.add_url_rule('/maillist/<int:character_id>',
                        view_func=MailList.as_view('maillist'))

@@ -33,5 +33,6 @@ class ResourceViews(TestCase):
     def test_svg(self):
         self.image_url('eggs.svg')
 
+
 if __name__ == "__main__":
     unittest.main()
