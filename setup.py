@@ -1,7 +1,7 @@
 """Setup module for Bootini Star."""
 __author__ = 'Ralph Seichter'
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name='Bootini-Star',
@@ -16,10 +16,12 @@ setup(
     license='MIT',
     python_requires='>=3.6',
     packages=find_packages(exclude=['tests', 'tmp', 'venv']),
-    data_files=[('Bootini-Star', ['LICENSE', 'wsgi.py']),
-                ('Bootini-Star/db-static', ['db-static/db-helper.sh',
-                                            'db-static/groups.sql.bz2', 'db-static/types.sql.bz2']),
-                ],
+    data_files=[
+        ('Bootini-Star', ['LICENSE', 'wsgi.py',
+                          'db-static/db-helper.sh',
+                          'db-static/groups.sql.bz2',
+                          'db-static/types.sql.bz2']),
+    ],
     install_requires=[
         'Flask >= 1.0.2',
         'Flask-Login >= 0.4.1',

@@ -1,24 +1,25 @@
 """
 Tests for the application's views/routes.
 """
-import sqlalchemy
-
 __author__ = 'Ralph Seichter'
 
+import json
+import time
 import unittest
 from uuid import uuid4
-import time
+
+import sqlalchemy
 from flask.helpers import url_for
-import json
+from sqlalchemy.exc import IntegrityError
+
 from bootini_star import app
 from bootini_star.extensions import app_config, db
 from bootini_star.models import Character, User
-from .base import TestCase, TestUser, skipUnlessOnline, chribba_id
+from bootini_star.views import InvalidUsage, user_loader
+from .base import TestCase, TestUser, chribba_id, skipUnlessOnline
+from .base import character_id, character_name
 from .base import email, email2, email3, email4
 from .base import password, password2, password3, password4, token4
-from .base import character_id, character_name, character_owner_hash
-from bootini_star.views import InvalidUsage, user_loader
-from sqlalchemy.exc import IntegrityError
 
 
 def add_user2():
@@ -38,8 +39,7 @@ def add_user3():
         user = TestUser(email=email3, password=password3, uuid=str(uuid4()))
         db.session.add(user)
         db.session.commit()
-        character = Character(user.uuid, character_id3,
-                              character_name3, character_owner_hash)
+        character = Character(user.uuid, character_id3, character_name3)
         character.token_str = json.dumps({
             'access_token': 'foo',
             'expires_at': time.time() - 600,  # Expired 10 minutes ago

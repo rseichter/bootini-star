@@ -33,12 +33,8 @@ class Callback(MethodView):
         resp = es.auth_verify()  # pragma: no cover
         if resp.ok:  # pragma: no cover
             json = resp.json()
-            character = Character(
-                current_user.uuid,
-                json['CharacterID'],
-                json['CharacterName'],
-                json['CharacterOwnerHash']
-            )
+            character = Character(current_user.uuid, json['CharacterID'],
+                                  json['CharacterName'])
             character.set_token(auth_token)
             db.session.merge(character)
             db.session.commit()

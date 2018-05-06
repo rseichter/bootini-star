@@ -3,11 +3,12 @@ Model classes and related helper functions. SQLAlchemy is used for ORM.
 """
 __author__ = 'Ralph Seichter'
 
+import datetime
 import json
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import flask_login
-from sqlalchemy import BigInteger, Column, DateTime
+from sqlalchemy import BigInteger, Column, DateTime, event
 from sqlalchemy import ForeignKey, SmallInteger, String
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.compiler import compiles
@@ -74,10 +75,11 @@ class User(db.Model, flask_login.UserMixin):
         'admin': 100,
     }
 
-    email = Column(String(100), primary_key=True, nullable=False)
-    password = Column(String(250), nullable=False)
+    email = Column(String(256), primary_key=True, nullable=False)
+    password = Column(String(90), nullable=False)
     uuid = Column(String(40), nullable=False, unique=True)
     registered_at = Column(DateTime, nullable=False, server_default=UtcNow())
+    modified_at = Column(DateTime, nullable=False, server_default=UtcNow())
     level = Column(SmallInteger, nullable=False)
     activation_token = Column(String(40))
     eve_characters = relationship('Character', backref='user', lazy=True)
@@ -127,6 +129,11 @@ def user_loader(email: str) -> Optional[User]:
         return None
 
 
+@event.listens_for(User, 'before_update')
+def receive_before_update(mapper, connection, target: User):
+    target.modified_at = datetime.datetime.utcnow()
+
+
 class Character(db.Model):
     """
     Model class representing an EVE Online player character. Each application
@@ -141,9 +148,6 @@ class Character(db.Model):
 
     :type name: str
     :param name: Character name.
-
-    :type owner_hash: str
-    :param owner_hash: Identifies the character owner for CCP.
     """
     __tablename__ = "characters"
 
@@ -151,16 +155,15 @@ class Character(db.Model):
     owner = Column(String(40), ForeignKey('users.uuid'), nullable=False)
     # Use ESI character ID as primary key.
     id = Column(BigInteger, primary_key=True, autoincrement=False)
-    name = Column(String(100), nullable=False, unique=True)
-    owner_hash = Column(String(50), nullable=False)
+    name = Column(String(256), nullable=False, unique=True)
+    modified_at = Column(DateTime, nullable=False, server_default=UtcNow())
     # SSO authentication token data
     token_str = Column('token', String(500))
 
-    def __init__(self, owner, char_id, name, owner_hash):
+    def __init__(self, owner, char_id, name):
         self.owner = owner
         self.id = char_id
         self.name = name
-        self.owner_hash = owner_hash
 
     def set_token(self, token_dict):
         """
@@ -174,6 +177,11 @@ class Character(db.Model):
     def token_dict(self):
         """Retrieve access token dictionary."""
         return json.loads(self.token_str)
+
+
+@event.listens_for(Character, 'before_update')
+def receive_before_update(mapper, connection, target: Character):
+    target.modified_at = datetime.datetime.utcnow()
 
 
 def character_loader(char_id: int, **kwargs) -> Optional[Character]:

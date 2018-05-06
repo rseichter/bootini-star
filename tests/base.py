@@ -3,19 +3,21 @@ Basic unittest configuration, classes and functions.
 """
 __author__ = 'Ralph Seichter'
 
-import unittest
-from uuid import uuid4
 import ast
+import json
 import os
 import re
 import time
-import json
+import unittest
 import warnings
 from unittest.util import safe_repr
+from uuid import uuid4
+
+from flask.wrappers import Response
+
 from bootini_star import app
 from bootini_star.extensions import db
 from bootini_star.models import Character, User
-from flask.wrappers import Response
 
 user_agent = 'unittest/0.0.1'
 
@@ -37,7 +39,6 @@ token4 = str(uuid4())
 
 character_id = 123
 character_name = 'Character ' + str(character_id)
-character_owner_hash = character_name + ' hash'
 
 chribba_id = 196379789
 eulynn_id = 701626672
@@ -82,8 +83,7 @@ class TestCase(unittest.TestCase):
             db.create_all()
             user = TestUser(email, password, uuid)
             db.session.add(user)
-            character = Character(uuid, character_id,
-                                  character_name, character_owner_hash)
+            character = Character(uuid, character_id, character_name)
             character.token_str = json.dumps({
                 'access_token': 'foo',
                 'expires_at': time.time() + 600,  # Expires in 10 minutes

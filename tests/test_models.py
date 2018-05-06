@@ -11,7 +11,7 @@ from bootini_star import app
 from bootini_star.extensions import db
 from bootini_star.models import character_loader
 from bootini_star.models import mssql_utcnow, mysql_utcnow, pg_utcnow
-from .base import TestCase, TestUser, Character, User
+from .base import Character, TestCase, TestUser, User
 from .base import character_id, character_name
 from .base import email, uuid
 
@@ -91,14 +91,14 @@ class CharacterModel(TestCase):
 
     def test_bad_owner(self):
         with app.app_context():
-            character = Character('bad', 0, '!' + character_name, 'dummy')
+            character = Character('bad', 0, '!' + character_name)
             db.session.add(character)
             with self.assertRaises(IntegrityError):
                 db.session.commit()
 
     def test_add_char(self):
         with app.app_context():
-            character = Character(uuid, 0, '!' + character_name, 'dummy')
+            character = Character(uuid, 0, '!' + character_name)
             db.session.add(character)
             db.session.commit()
 

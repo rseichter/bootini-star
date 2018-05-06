@@ -45,8 +45,7 @@ class Cache(db.Model):
     """Cache ID-name pairs."""
     __tablename__ = "cache"
     id = Column(BigInteger, primary_key=True, autoincrement=False)
-    name = Column(String(100), nullable=False)
-    expires = Column(DateTime)
+    name = Column(String(256), nullable=False)
 
     def __init__(self, entry_id, name):
         self.id = entry_id
