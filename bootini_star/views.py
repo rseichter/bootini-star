@@ -224,7 +224,7 @@ class MailList(MethodView):
                 labels = esi.get_mail_labels(api, character_id)
                 mails = esi.get_mail_list(api, character_id, **kwargs)
                 mail_ids = set()
-                for mail in sm:
+                for mail in mails:
                     mail_ids.add(mail._from)
                 eveCache.eve_characters(mail_ids)
             except ApiException as e:
