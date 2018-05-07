@@ -12,7 +12,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 import swagger_client
 from bootini_star import app
-from bootini_star.esi import IdNameCache
+from bootini_star.esi import IdNameCache, get_mail_list, get_mail_labels
 from swagger_client.rest import ApiException
 from .base import TestCase, chribba_id, eulynn_id, skipUnlessOnline, user_agent
 
@@ -43,6 +43,7 @@ class ESI(TestCase):
     def test_eve_char_valid_ids(self):
         ids = set([chribba_id, eulynn_id])
         with app.app_context():
+            self.inCache.eve_characters(ids)  # populate cache
             cs = self.inCache.eve_characters(ids)
             self.assertEqual(len(ids), len(cs))
             while cs:
@@ -72,6 +73,14 @@ class ESI(TestCase):
     def test_eve_skill_unknown(self):
         with app.app_context(), self.assertRaises(NoResultFound):
             self.inCache.eve_type(-1)
+
+    def test_get_mail_labels(self):
+        with self.assertRaises(ApiException):
+            get_mail_labels(swagger_client.MailApi(), 123)
+
+    def test_get_mail_list(self):
+        with self.assertRaises(ApiException):
+            get_mail_list(swagger_client.MailApi(), 456)
 
     @skipUnlessOnline
     def test_get_universe_regions(self):

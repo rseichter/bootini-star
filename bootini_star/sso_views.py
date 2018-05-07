@@ -30,8 +30,8 @@ class Callback(MethodView):
         The rest of this method is not covered by automated unit tests because
         it would require user interaction to authorise a character.
         """
-        resp = es.auth_verify()  # pragma: no cover
-        if resp.ok:  # pragma: no cover
+        resp = es.auth_verify()
+        if resp.ok:
             json = resp.json()
             character = Character(current_user.uuid, json['CharacterID'],
                                   json['CharacterName'])
@@ -40,7 +40,7 @@ class Callback(MethodView):
             db.session.commit()
             flash('Verification successful.', 'success')
             return redirect(url_for('bs.dashboard'))
-        else:  # pragma: no cover
+        else:
             flash('Verification failed.', 'error')
             return redirect(url_for('bs.index'))
 

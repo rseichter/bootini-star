@@ -23,13 +23,13 @@ class Sso(TestCase):
         self.assertEqual(state, my_state)
 
     def test_refresh_token(self):
-        token, is_new = self.es.refresh_token()
-        self.assertFalse(token)
-        self.assertFalse(is_new)
+        rt = self.es.refresh_token()
+        self.assertFalse(rt.token)
+        self.assertFalse(rt.token_changed)
 
     def test_refresh_token_force(self):
         with self.assertRaises(OAuth2Error):
-            self.es.refresh_token(force_refresh=True)
+            self.es.refresh_token(refresh=True)
 
 
 if __name__ == "__main__":

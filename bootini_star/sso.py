@@ -3,7 +3,8 @@ Handle EVE SSO calls.
 """
 __author__ = 'Ralph Seichter'
 
-import datetime
+from collections import namedtuple
+from datetime import datetime
 
 from requests_oauthlib import OAuth2Session
 
@@ -18,13 +19,7 @@ scope = [
     'esi-skills.read_skillqueue.v1',
 ]
 
-
-def token_updater(x):  # pragma: no cover
-    """Only used for debugging"""
-    log.debug('*** Entering token_updater')
-    log.debug(x.reason)
-    log.debug(vars(x.request))
-    log.debug('*** Exiting token_updater')
+RefreshToken = namedtuple('RefreshToken', ['token', 'token_changed'])
 
 
 class EveSso(OAuth2Session):
@@ -45,7 +40,6 @@ class EveSso(OAuth2Session):
             redirect_uri=self.config.ESI_CALLBACK_URI,
             auto_refresh_url=self.config.ESI_TOKEN_URI,
             auto_refresh_kwargs=self.refresh_kwargs,
-            token_updater=token_updater,
             scope=scope,
             token=token_dict
         )
@@ -63,26 +57,25 @@ class EveSso(OAuth2Session):
             client_secret=self.config.ESI_SECRET_KEY,
             code=code
         )
-        return self.token  # pragma: no cover (Not reached during tests)
+        return self.token
 
-    def auth_verify(self):  # pragma: no cover (Not reached during tests)
+    def auth_verify(self):
         return self.get(self.config.ESI_VERIFY_URI)
 
     # noinspection PyMethodOverriding
-    def refresh_token(self, force_refresh=False):
-        needs_refresh = False
-        ea = self.token.get('expires_at')
-        if ea and datetime.datetime.utcnow() > datetime.datetime.utcfromtimestamp(ea - 90):  # pragma: no cover (Never true during tests)
-            needs_refresh = True
-            log.debug('Access token expired')
-        if force_refresh or needs_refresh:
+    def refresh_token(self, refresh=False) -> RefreshToken:
+        if not refresh:
+            ea = self.token.get('expires_at')
+            if ea and datetime.utcnow() > datetime.utcfromtimestamp(ea - 90):
+                log.debug('Access token expired')
+                refresh = True
+        if refresh:
             log.debug('Attempting to refresh token')
             token = super().refresh_token(
                 self.config.ESI_TOKEN_URI,
                 **self.refresh_kwargs
             )
-            log.debug(
-                'Returning refreshed token')  # pragma: no cover (Not reached during tests)
-            return token, True  # pragma: no cover (Not reached during tests)
+            log.debug('Returning refreshed token')
+            return RefreshToken(token=token, token_changed=True)
         log.debug('Returning existing token')
-        return self.token, False
+        return RefreshToken(token=self.token, token_changed=False)

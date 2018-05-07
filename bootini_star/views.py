@@ -37,7 +37,7 @@ class InvalidUsage(Exception):
             self.status_code = status_code
         self.payload = payload
 
-    def to_dict(self):  # pragma: no cover
+    def to_dict(self):
         rv = dict(self.payload or ())
         rv['message'] = self.message
         return rv
@@ -110,7 +110,7 @@ class Activate(MethodView):
                 db.session.commit()
                 flash('Your account is now active, please login.', 'success')
                 return redirect(url_for('.login'))
-            except Exception as e:  # pragma: no cover
+            except Exception as e:
                 log.error('Account activation failed: {}'.format(e))
         flash('Account activation failed.', 'danger')
         return redirect(url_for('.index'))
@@ -127,7 +127,7 @@ class Login(MethodView):
     @staticmethod
     def post():
         form = LoginForm()
-        if not form.validate_on_submit():  # pragma: no cover
+        if not form.validate_on_submit():
             flash_form_errors(form)
             return render_template('login.html', form=form)
         user = request_loader(request)
@@ -186,22 +186,22 @@ class Character(MethodView):
 
 def refresh_token(api, current_character):
     es = EveSso(json.loads(current_character.token_str))
-    token_dict, is_new_token = es.refresh_token()
-    if is_new_token:  # pragma: no cover (Can't test without valid tokens)
-        current_character.set_token(token_dict)
+    rt = es.refresh_token()
+    if rt.token_changed:
+        current_character.set_token(rt.token)
         db.session.merge(current_character)
         db.session.commit()
     client = api.api_client
     client.set_default_header('User-Agent', 'BootiniStar/0.0.1')
-    client.configuration.access_token = token_dict['access_token']
+    client.configuration.access_token = rt.token['access_token']
     return api
 
 
-def mail_api(current_character):  # pragma: no cover
+def mail_api(current_character):
     return refresh_token(swagger_client.MailApi(), current_character)
 
 
-def skills_api(current_character):  # pragma: no cover
+def skills_api(current_character):
     return refresh_token(swagger_client.SkillsApi(), current_character)
 
 
@@ -217,7 +217,7 @@ class MailList(MethodView):
     @flask_login.login_required
     def get(self, character_id, label=None):
         cc = current_user.load_character(character_id)
-        if cc:  # pragma: no cover (Never true without valid tokens in DB)
+        if cc:
             api = mail_api(cc)
             kwargs = {'labels': [label]} if isinstance(label, int) else {}
             try:
@@ -247,11 +247,11 @@ class Mail(MethodView):
         cc = current_user.load_character(character_id)
         if cc:
             api = mail_api(cc)
-            try:  # pragma: no cover (Needs valid tokens)
+            try:
                 rv = api.get_characters_character_id_mail_mail_id(
                     character_id, mail_id)
                 return render_template('mail.html', eveCache=eveCache, mail=rv)
-            except ApiException as e:  # pragma: no cover (Needs valid tokens)
+            except ApiException as e:
                 return api_fail(e)
         else:
             flash('Please select one of your characters.', 'warning')
@@ -264,7 +264,7 @@ class RemoveMail(MethodView):
     @flask_login.login_required
     def get(self, character_id: int, mail_id: int):
         cc = current_user.load_character(character_id)
-        if cc:  # pragma: no cover (Needs valid tokens)
+        if cc:
             api = mail_api(cc)
             try:
                 api.delete_characters_character_id_mail_mail_id(
@@ -299,7 +299,7 @@ class Skills(MethodView):
     @flask_login.login_required
     def get(self, character_id):
         cc = current_user.load_character(character_id)
-        if cc:  # pragma: no cover (Needs valid tokens)
+        if cc:
             api = skills_api(cc)
             try:
                 rv = api.get_characters_character_id_skillqueue(character_id)

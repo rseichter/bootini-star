@@ -126,7 +126,7 @@ class IdNameCache(CacheBase):
         unknown_ids = list()
         for char_id in char_ids:
             character = self.get_cached(char_id)
-            if character:  # pragma: no cover (Test cache is empty)
+            if character:
                 known_characters.add(character)
             else:
                 unknown_ids.append(char_id)
@@ -152,7 +152,7 @@ class IdNameCache(CacheBase):
 
 
 def get_mail_labels(api: swagger_client.MailApi,
-                    character_id: int) -> GetCharactersCharacterIdMailLabelsOk:  # pragma: no cover
+                    character_id: int) -> GetCharactersCharacterIdMailLabelsOk:
     """
     Returns the mail labels and unread counts for a character.
 
@@ -165,7 +165,7 @@ def get_mail_labels(api: swagger_client.MailApi,
 
 def get_mail_list(api: swagger_client.MailApi, character_id: int, **kwargs) -> \
         List[
-            GetCharactersCharacterIdMail200Ok]:  # pragma: no cover
+            GetCharactersCharacterIdMail200Ok]:
     """
     Returns the latest 50 email headers for a character.
 

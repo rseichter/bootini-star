@@ -125,7 +125,7 @@ def user_loader(email: str) -> Optional[User]:
     """Load user from DB, return None if not found."""
     try:
         return User.query.filter_by(email=email).first()
-    except SQLAlchemyError:  # pragma: no cover
+    except SQLAlchemyError:
         return None
 
 
@@ -180,7 +180,7 @@ class Character(db.Model):
 
 
 @event.listens_for(Character, 'before_update')
-def before_character_update(mapper, connection, target: Character):  # pragma: no cover
+def before_character_update(mapper, connection, target: Character):
     target.modified_at = datetime.datetime.utcnow()
 
 
@@ -189,7 +189,7 @@ def character_loader(char_id: int, **kwargs) -> Optional[Character]:
     try:
         log.debug('Load character ID=' + str(char_id))
         return Character.query.filter_by(id=char_id, **kwargs).first()
-    except SQLAlchemyError:  # pragma: no cover
+    except SQLAlchemyError:
         return None
 
 

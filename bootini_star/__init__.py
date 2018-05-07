@@ -30,7 +30,7 @@ app_config.update(app.config)
 # Set logging level
 ls = app_config['LOG_LEVEL'].upper()
 ln = getattr(logging, ls, None)
-if not isinstance(ln, int):  # pragma: no cover
+if not isinstance(ln, int):
     raise ValueError("Invalid LOG_LEVEL '%s'" % ls)
 log.setLevel(ln)
 
