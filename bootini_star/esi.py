@@ -133,12 +133,10 @@ class IdNameCache(CacheBase):
         if unknown_ids:
             log.debug('Querying ESI for character IDs {}'.format(unknown_ids))
             eve_characters: List[
-                GetCharactersNames200Ok] = swagger_client.CharacterApi().get_characters_names(
-                unknown_ids)
+                GetCharactersNames200Ok] = swagger_client.CharacterApi().get_characters_names(unknown_ids)
             for ec in eve_characters:
-                kc = self.add(ec.character_id, ec.character_name)
-                if kc not in known_characters:
-                    known_characters.add(kc)
+                known_characters.add(
+                    self.add(ec.character_id, ec.character_name))
         return known_characters
 
     @staticmethod

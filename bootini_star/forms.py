@@ -7,20 +7,21 @@ from flask_wtf import FlaskForm
 from wtforms import PasswordField, StringField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo
 
+EMAIL_LABEL = 'Email address'
+EMAIL_MSG = 'Valid email address is required.'
+PW_LABEL = 'Password'
+PW_MSG = 'Password is required.'
+
 
 class LoginForm(FlaskForm):
-    email = StringField('Email address', validators=[
-        Email(message='Valid email address is required.')])
-    password = PasswordField('Password', validators=[
-        DataRequired('Password is required.')])
+    email = StringField(EMAIL_LABEL, validators=[Email(message=EMAIL_MSG)])
+    password = PasswordField(PW_LABEL, validators=[DataRequired(PW_MSG)])
     submit = SubmitField('Login')
 
 
 class SignupForm(FlaskForm):
-    email = StringField('Email address', validators=[
-        Email(message='Valid email address is required.')])
-    password = PasswordField('Password', validators=[
-        DataRequired('Password is required.')])
+    email = StringField(EMAIL_LABEL, validators=[Email(message=EMAIL_MSG)])
+    password = PasswordField(PW_LABEL, validators=[DataRequired(PW_MSG)])
     confirm = PasswordField('Confirm password', validators=[
         DataRequired('Password confirmation is required.'),
         EqualTo('password', message='Password and confirmation must match.')

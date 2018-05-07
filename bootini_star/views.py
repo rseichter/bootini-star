@@ -184,17 +184,25 @@ class Character(MethodView):
             return api_fail(e)
 
 
-def refresh_token(api, cc):
-    es = EveSso(json.loads(cc.token_str))
+def refresh_token(api, current_character):
+    es = EveSso(json.loads(current_character.token_str))
     token_dict, is_new_token = es.refresh_token()
     if is_new_token:  # pragma: no cover (Can't test without valid tokens)
-        cc.set_token(token_dict)
-        db.session.merge(cc)
+        current_character.set_token(token_dict)
+        db.session.merge(current_character)
         db.session.commit()
     client = api.api_client
     client.set_default_header('User-Agent', 'BootiniStar/0.0.1')
     client.configuration.access_token = token_dict['access_token']
-    return token_dict
+    return api
+
+
+def mail_api(current_character):  # pragma: no cover
+    return refresh_token(swagger_client.MailApi(), current_character)
+
+
+def skills_api(current_character):  # pragma: no cover
+    return refresh_token(swagger_client.SkillsApi(), current_character)
 
 
 def api_fail(api_exception):
@@ -210,29 +218,22 @@ class MailList(MethodView):
     def get(self, character_id, label=None):
         cc = current_user.load_character(character_id)
         if cc:  # pragma: no cover (Never true without valid tokens in DB)
-            api = swagger_client.MailApi()
-            refresh_token(api, cc)
+            api = mail_api(cc)
             kwargs = {'labels': [label]} if isinstance(label, int) else {}
             try:
-                from_ids = set()
                 labels = esi.get_mail_labels(api, character_id)
-                mail_list = esi.get_mail_list(api, character_id, **kwargs)
-                for mail in mail_list:
-                    from_id = mail._from
-                    if from_id not in from_ids:
-                        from_ids.add(from_id)
-                eveCache.eve_characters(from_ids)
-                return render_template('maillist.html', eveCache=eveCache,
-                                       character_id=character_id,
-                                       labels=sorted(labels.labels,
-                                                     key=attrgetter(
-                                                         'label_id')),
-                                       maillist=sorted(mail_list,
-                                                       key=attrgetter(
-                                                           'timestamp'),
-                                                       reverse=True))
+                mails = esi.get_mail_list(api, character_id, **kwargs)
+                mail_ids = set()
+                for mail in sm:
+                    mail_ids.add(mail._from)
+                eveCache.eve_characters(mail_ids)
             except ApiException as e:
                 return api_fail(e)
+            sl = sorted(labels.labels, key=attrgetter('label_id'))
+            sm = sorted(mails, key=attrgetter('timestamp'), reverse=True)
+            return render_template('maillist.html', eveCache=eveCache,
+                                   character_id=character_id, labels=sl,
+                                   maillist=sm)
         else:
             flash('Please select one of your characters.', 'warning')
         return redirect(url_for('.dashboard'))
@@ -245,8 +246,7 @@ class Mail(MethodView):
     def get(self, character_id: int, mail_id: int):
         cc = current_user.load_character(character_id)
         if cc:
-            api = swagger_client.MailApi()
-            refresh_token(api, cc)
+            api = mail_api(cc)
             try:  # pragma: no cover (Needs valid tokens)
                 rv = api.get_characters_character_id_mail_mail_id(
                     character_id, mail_id)
@@ -265,8 +265,7 @@ class RemoveMail(MethodView):
     def get(self, character_id: int, mail_id: int):
         cc = current_user.load_character(character_id)
         if cc:  # pragma: no cover (Needs valid tokens)
-            api = swagger_client.MailApi()
-            refresh_token(api, cc)
+            api = mail_api(cc)
             try:
                 api.delete_characters_character_id_mail_mail_id(
                     character_id, mail_id)
@@ -301,8 +300,7 @@ class Skills(MethodView):
     def get(self, character_id):
         cc = current_user.load_character(character_id)
         if cc:  # pragma: no cover (Needs valid tokens)
-            api = swagger_client.SkillsApi()
-            refresh_token(api, cc)
+            api = skills_api(cc)
             try:
                 rv = api.get_characters_character_id_skillqueue(character_id)
                 return render_template('skillqueue.html', eveCache=eveCache,
