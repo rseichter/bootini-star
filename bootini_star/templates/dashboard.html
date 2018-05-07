@@ -71,8 +71,8 @@
     <script type="text/javascript">
         $(function () {
             $(".showModal").on("click", function () {
-                let character_id = $(this).data("character_id");
-                let msg = "Do you want to remove character " + character_id + " from your dashboard?";
+                var character_id = $(this).data("character_id");
+                var msg = "Do you want to remove character " + character_id + " from your dashboard?";
                 msg += " Associated authentication data will be removed from the database.";
                 $("#yesPlease").data("character_id", character_id);
                 $(".modal-body").html(msg);
@@ -80,7 +80,7 @@
         });
         $(function () {
             $("#yesPlease").on("click", function () {
-                const href = window.location.href + "/rm/" + $(this).data("character_id");
+                var href = window.location.href + "/rm/" + $(this).data("character_id");
                 $("#bsModal").modal("hide");
                 window.location.href=href
             });

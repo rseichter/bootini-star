@@ -44,8 +44,8 @@
     <script type="text/javascript">
         $(function () {
             $(".showModal").on("click", function () {
-                let charid = $(this).data("charid");
-                let msg = "Do you want to permanently delete this mail? This action cannot";
+                var charid = $(this).data("charid");
+                var msg = "Do you want to permanently delete this mail? This action cannot";
                 msg += " be undone. Note that due to caching it can take a while for the";
                 msg += " deleted mail to disappear from the list.";
                 $("#yesPlease").data("charid", charid);
@@ -54,7 +54,7 @@
         });
         $(function () {
             $("#yesPlease").on("click", function () {
-                const href = window.location.href.replace("/mail/", "/mail/rm/");
+                var href = window.location.href.replace("/mail/", "/mail/rm/");
                 $("#bsModal").modal("hide");
                 window.location.href = href;
             });
