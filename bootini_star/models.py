@@ -130,7 +130,7 @@ def user_loader(email: str) -> Optional[User]:
 
 
 @event.listens_for(User, 'before_update')
-def receive_before_update(mapper, connection, target: User):
+def before_user_update(mapper, connection, target: User):
     target.modified_at = datetime.datetime.utcnow()
 
 
@@ -180,7 +180,7 @@ class Character(db.Model):
 
 
 @event.listens_for(Character, 'before_update')
-def receive_before_update(mapper, connection, target: Character):
+def before_character_update(mapper, connection, target: Character):  # pragma: no cover
     target.modified_at = datetime.datetime.utcnow()
 
 

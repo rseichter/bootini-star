@@ -5,6 +5,15 @@
 {% block body %}
     {% if character_id and maillist %}
         <div class="container-fluid mx-1">
+            {% for label in labels %}
+                <a href="{{ url_for('bs.maillabel', character_id=character_id, label=label.label_id) }}">
+                    {{ label.name }}
+                    {% if label.unread_count and label.unread_count > 0 %}
+                        ({{ label.unread_count }})
+                    {% endif %}
+                </a> &middot;
+            {% endfor %}
+            <a href="{{ url_for('bs.maillist', character_id=character_id) }}">All</a>
             <table class="table table-striped">
                 <thead>
                 <tr>
@@ -25,7 +34,7 @@
                                 {{ mail.subject }}
                             </a>
                         </td>
-                        <td>{{ mail.timestamp }}</td>
+                        <td>{{ mail.timestamp | eve_time }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>

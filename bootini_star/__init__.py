@@ -9,10 +9,13 @@ __author__ = 'Ralph Seichter'
 import logging
 import os
 import re
+from datetime import datetime
 
 from flask import Flask
 from flask_migrate import Migrate
 
+from swagger_client.models.get_characters_character_id_mail_labels_label import \
+    GetCharactersCharacterIdMailLabelsLabel
 from .extensions import app_config, db, log, login_manager
 from .resource_views import StaticFileConverter, blueprint as res_blueprint
 from .sso_views import blueprint as sso_blueprint
@@ -50,15 +53,15 @@ _re_flags = re.RegexFlag.MULTILINE
 _div_pat = re.compile(r'<div>(.*?)</div>', flags=_re_flags)
 _font_pat = re.compile(r'<(font[^>]*|/font)>', flags=_re_flags)
 _span_pat = re.compile(r'<(span[^>]*|/span)>', flags=_re_flags)
+_time_pat = re.compile(r'\+00:00')
 _si_pat = re.compile(r'href="showinfo:(\d+)//(\d+)"', flags=_re_flags)
 
 
 @app.template_filter('eve_html')
-def html_filter(html):
+def html_filter(html: str) -> str:
     """
     Strip selected HTML tags created within EVE's mail client.
 
-    :type html: str
     :param html: HTML string to clean up
     """
     html = re.sub(_font_pat, '', html)
@@ -67,14 +70,12 @@ def html_filter(html):
 
 
 @app.template_filter('showinfo')
-def showinfo_filter(html, urlbase):
+def showinfo_filter(html: str, urlbase: str) -> str:
     """
     Convert EVE 'showinfo' links into HTML links. This currently only works for
     links that reference EVE characters, other link types are ignored.
 
-    :type html: str
     :param html: HTML string to parse
-    :type urlbase: str
     :param urlbase: Base URL to append to
     """
     flags = _re_flags
@@ -87,3 +88,14 @@ def showinfo_filter(html, urlbase):
         pos += len(m.group(0))
         m = _si_pat.search(html, pos)
     return html
+
+
+@app.template_filter('eve_time')
+def time_filter(dt: datetime) -> str:
+    """
+    Returns a string representation of a datetime object. Seconds, microseconds
+    and TZ offset (EVE uses UTC anyway) are truncated.
+
+    :param dt: Datetime object to convert to a string.
+    """
+    return dt.strftime('%Y-%m-%d %H:%M')

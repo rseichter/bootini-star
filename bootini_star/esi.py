@@ -6,11 +6,18 @@ __author__ = 'Ralph Seichter'
 
 from typing import List, Optional, Set
 
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy import BigInteger, Column, ForeignKey, String, Text
 from sqlalchemy.orm import relationship
 
 import swagger_client
-from swagger_client.models.get_characters_names_200_ok import GetCharactersNames200Ok
+from swagger_client.models.get_characters_character_id_mail_200_ok import \
+    GetCharactersCharacterIdMail200Ok
+from swagger_client.models.get_characters_character_id_mail_labels_ok import \
+    GetCharactersCharacterIdMailLabelsOk
+from swagger_client.models.get_characters_character_id_ok import \
+    GetCharactersCharacterIdOk
+from swagger_client.models.get_characters_names_200_ok import \
+    GetCharactersNames200Ok
 from .extensions import db, log
 
 
@@ -144,3 +151,40 @@ class IdNameCache(CacheBase):
         """
         log.debug('Querying DB for EVE type ID ' + str(type_id))
         return EveType.query.filter_by(id=type_id).one()
+
+
+def get_mail_labels(api: swagger_client.MailApi,
+                    character_id: int) -> GetCharactersCharacterIdMailLabelsOk:  # pragma: no cover
+    """
+    Returns the mail labels and unread counts for a character.
+
+    :param api: Mail API
+    :param character_id: Character ID
+    """
+    log.debug('get_mail_labels: %d' % character_id)
+    return api.get_characters_character_id_mail_labels(character_id)
+
+
+def get_mail_list(api: swagger_client.MailApi, character_id: int, **kwargs) -> \
+        List[
+            GetCharactersCharacterIdMail200Ok]:  # pragma: no cover
+    """
+    Returns the latest 50 email headers for a character.
+
+    :param api: Mail API
+    :param character_id: Character ID
+    """
+    log.debug('get_mail_list: %d' % character_id)
+    return api.get_characters_character_id_mail(character_id, **kwargs)
+
+
+def get_character(api: swagger_client.CharacterApi,
+                  character_id: int) -> GetCharactersCharacterIdOk:
+    """
+    Returns a character's public information.
+
+    :param api: Character API
+    :param character_id: Character ID
+    """
+    log.debug('get_character: %d' % character_id)
+    return api.get_characters_character_id(character_id)

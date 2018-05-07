@@ -16,15 +16,15 @@ from flask.views import MethodView, View
 from flask_login.utils import current_user
 
 import swagger_client
+from bootini_star import esi
 from swagger_client.rest import ApiException
 from .email import RegistrationMail
-from .esi import IdNameCache
 from .extensions import app_config, db, log, login_manager, pwd_context
 from .forms import LoginForm, SignupForm
 from .models import User, character_list_loader, user_loader
 from .sso import EveSso
 
-eveCache = IdNameCache()
+eveCache = esi.IdNameCache()
 
 
 class InvalidUsage(Exception):
@@ -177,10 +177,11 @@ class Character(MethodView):
     def get(self, character_id):
         api = swagger_client.CharacterApi()
         try:
-            rv = api.get_characters_character_id(character_id)
+            return render_template('character.html',
+                                   character=esi.get_character(api,
+                                                               character_id))
         except ApiException as e:
             return api_fail(e)
-        return render_template('character.html', character=rv)
 
 
 def refresh_token(api, cc):
@@ -206,20 +207,30 @@ class MailList(MethodView):
     methods = ['GET']
 
     @flask_login.login_required
-    def get(self, character_id):
+    def get(self, character_id, label=None):
         cc = current_user.load_character(character_id)
         if cc:  # pragma: no cover (Never true without valid tokens in DB)
             api = swagger_client.MailApi()
             refresh_token(api, cc)
+            kwargs = {'labels': [label]} if isinstance(label, int) else {}
             try:
                 from_ids = set()
-                maillist = api.get_characters_character_id_mail(character_id)
-                for mail in maillist:
+                labels = esi.get_mail_labels(api, character_id)
+                mail_list = esi.get_mail_list(api, character_id, **kwargs)
+                for mail in mail_list:
                     from_id = mail._from
                     if from_id not in from_ids:
                         from_ids.add(from_id)
                 eveCache.eve_characters(from_ids)
-                return render_template('maillist.html', eveCache=eveCache, character_id=character_id, maillist=sorted(maillist, key=attrgetter('timestamp'), reverse=True))
+                return render_template('maillist.html', eveCache=eveCache,
+                                       character_id=character_id,
+                                       labels=sorted(labels.labels,
+                                                     key=attrgetter(
+                                                         'label_id')),
+                                       maillist=sorted(mail_list,
+                                                       key=attrgetter(
+                                                           'timestamp'),
+                                                       reverse=True))
             except ApiException as e:
                 return api_fail(e)
         else:
@@ -322,6 +333,8 @@ blueprint.add_url_rule(
     '/mail/<int:character_id>/<int:mail_id>', view_func=Mail.as_view('mail'))
 blueprint.add_url_rule('/mail/rm/<int:character_id>/<int:mail_id>',
                        view_func=RemoveMail.as_view('rmmail'))
+blueprint.add_url_rule('/maillist/<int:character_id>/<int:label>',
+                       view_func=MailList.as_view('maillabel'))
 blueprint.add_url_rule('/maillist/<int:character_id>',
                        view_func=MailList.as_view('maillist'))
 blueprint.add_url_rule('/skillqueue/<int:character_id>',

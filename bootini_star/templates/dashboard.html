@@ -15,6 +15,9 @@
                         </td>
                         <td>
                             <button type="button" class="btn btn-secondary"
+                                    onclick="location.href='{{ url_for('bs.maillabel', character_id=c.id, label=1) }}'">Inbox
+                            </button>
+                            <button type="button" class="btn btn-secondary"
                                     onclick="location.href='{{ url_for('bs.maillist', character_id=c.id) }}'">Mail list
                             </button>
                             <button type="button" class="btn btn-secondary"

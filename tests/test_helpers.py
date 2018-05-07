@@ -4,7 +4,9 @@ Tests for the helper functions.
 __author__ = 'Ralph Seichter'
 
 import unittest
-from bootini_star import html_filter, showinfo_filter
+from datetime import datetime
+
+from bootini_star import html_filter, showinfo_filter, time_filter
 
 
 class Helpers(unittest.TestCase):
@@ -15,12 +17,17 @@ class Helpers(unittest.TestCase):
             'Application no <b>"123" </b>has been <b>positively</b> verified.') == 28)
 
     def test_showinfo_filter_char(self):
-        self.assertEqual(showinfo_filter('<a href="showinfo:1377//54321">eggs</a>', '/spam/'),
-                         '<a href="/spam/character/54321">eggs</a>')
+        self.assertEqual(
+            showinfo_filter('<a href="showinfo:1377//54321">eggs</a>',
+                            '/spam/'),
+            '<a href="/spam/character/54321">eggs</a>')
 
     def test_showinfo_filter_bogus(self):
         html = '<a href="showinfo:0//321">ham</a>'
         self.assertEqual(showinfo_filter(html, '/ham/'), html)
+
+    def test_time_filter(self):
+        self.assertIsNotNone(time_filter(datetime.utcnow()))
 
 
 if __name__ == "__main__":
