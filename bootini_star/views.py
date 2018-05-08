@@ -16,7 +16,7 @@ from flask.views import MethodView, View
 from flask_login.utils import current_user
 
 import swagger_client
-from bootini_star import esi
+from bootini_star import esi, version
 from swagger_client.rest import ApiException
 from .email import RegistrationMail
 from .extensions import app_config, db, log, login_manager, pwd_context
@@ -192,7 +192,7 @@ def refresh_token(api, current_character):
         db.session.merge(current_character)
         db.session.commit()
     client = api.api_client
-    client.set_default_header('User-Agent', 'BootiniStar/0.0.1')
+    client.set_default_header('User-Agent', version.USER_AGENT)
     client.configuration.access_token = rt.token['access_token']
     return api
 

@@ -1,11 +1,15 @@
 """Setup module for Bootini Star."""
 __author__ = 'Ralph Seichter'
 
-from setuptools import find_packages, setup
+import os
+
+from setuptools import __version__, find_packages, setup
+
+exec(open(os.path.join('bootini_star', 'version.py')).read())
 
 setup(
     name='Bootini-Star',
-    version='0.0.1.dev7',
+    version=__version__,
     description="Inspect EVE Online mail and skill queues in a web browser.",
     long_description=("Inspect EVE Online mail and skill queues in a web"
                       " browser. Inspired by CCP's discontinued EVE Gate"

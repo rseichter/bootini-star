@@ -12,6 +12,16 @@ from uuid import uuid4
 
 from .extensions import app_config, log
 
+UNITTEST_DOMAIN = '@unittest.unittest'
+
+
+def unittest_address(local_part: str) -> str:
+    return local_part + UNITTEST_DOMAIN
+
+
+def is_unittest_address(address: str) -> bool:
+    return address and address.endswith(UNITTEST_DOMAIN)
+
 
 class _Mail:
     pat = re.compile(r'\w@[\w-]{2,}\.\w{2,}')
@@ -48,11 +58,14 @@ class _Mail:
             em[k] = v
         em.set_content(body)
         with smtplib.SMTP(self.host, self.port) as smtp:
-            # smtp.set_debuglevel(1)
             if self.username:
                 smtp.starttls()
                 smtp.login(self.username, self.password)
-            smtp.send_message(em)
+            to = headers['To'] if 'To' in headers else None
+            if is_unittest_address(to):
+                log.debug('Skipping mail to <%s>' % to)
+            else:
+                smtp.send_message(em)
 
 
 class RegistrationMail(_Mail):

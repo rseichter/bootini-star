@@ -15,25 +15,26 @@ from uuid import uuid4
 
 from flask.wrappers import Response
 
-from bootini_star import app
+from bootini_star import app, version
+from bootini_star.email import unittest_address
 from bootini_star.extensions import db
 from bootini_star.models import Character, User
 
-user_agent = 'unittest/0.0.1'
+user_agent = version.USER_AGENT + ' Unittest'
 
-email = 'spam@unittest.unittest'
+email = unittest_address('spam')
 password = 'secret1'
 uuid = str(uuid4())
 
-email2 = 'ham@unittest.unittest'
+email2 = unittest_address('ham')
 password2 = 'secret2'
 uuid2 = str(uuid4())
 
-email3 = 'eggs@unittest.unittest'
+email3 = unittest_address('eggs')
 password3 = 'secret3'
 uuid3 = str(uuid4())
 
-email4 = 'monty@unittest.unittest'
+email4 = unittest_address('monty')
 password4 = 'secret4'
 token4 = str(uuid4())
 
@@ -43,40 +44,27 @@ character_name = 'Character ' + str(character_id)
 chribba_id = 196379789
 eulynn_id = 701626672
 
-
-def is_status_range(response, lower, upper):
-    return lower <= response.status_code <= upper
-
-
-def is_status_200(response):
-    return is_status_range(response, 200, 299)
-
-
-def is_status_400(response):
-    return is_status_range(response, 400, 499)
-
-
-def is_status_500(response):
-    return is_status_range(response, 500, 599)
-
-
 skipUnlessOnline = unittest.skipUnless(ast.literal_eval(
     os.getenv('ONLINE_TESTS', 'False')), 'ONLINE_TESTS=False')
 
 
 class TestUser(User):
 
-    def __init__(self, email, password, uuid, level=User.valid_levels['default'], activation_token=None):
-        super().__init__(email, password, uuid, level=level, activation_token=activation_token)
+    def __init__(self, email, password, uuid,
+                 level=User.valid_levels['default'], activation_token=None):
+        super().__init__(email, password, uuid, level=level,
+                         activation_token=activation_token)
 
 
 class TestCase(unittest.TestCase):
 
     def setUp(self):
         warnings.filterwarnings(
-            'ignore', message='unclosed <ssl\.SSLSocket ', category=ResourceWarning)
+            'ignore', message='unclosed <ssl\.SSLSocket ',
+            category=ResourceWarning)
         warnings.filterwarnings(
-            'ignore', message='The psycopg2 wheel package will be renamed ', category=UserWarning)
+            'ignore', message='The psycopg2 wheel package will be renamed ',
+            category=UserWarning)
         app.config.from_object('bootini_star.config.Testing')
 
         with app.app_context():
