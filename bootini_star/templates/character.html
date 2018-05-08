@@ -1,6 +1,6 @@
-{% extends "bootstrap.html" %}
-{% if character %} {% block title %}{{ character.name }}{% endblock %} {% endif %}
-{% block body %}
+{% extends "bs.html" %}
+{% if character %} {% block bstitle %}{{ character.name }}{% endblock %} {% endif %}
+{% block bscontent %}
 {% if character %}
     <div class="container-fluid mx-1">
         <br/>

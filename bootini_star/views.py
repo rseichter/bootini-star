@@ -2,6 +2,8 @@
 Application views/routes are based on Flask's MethodView. All primary views are
 combined into a Flask blueprint.
 """
+from sqlalchemy.exc import SQLAlchemyError
+
 __author__ = 'Ralph Seichter'
 
 import json
@@ -16,11 +18,11 @@ from flask.views import MethodView, View
 from flask_login.utils import current_user
 
 import swagger_client
-from bootini_star import esi, version
+from bootini_star import esi
 from swagger_client.rest import ApiException
 from .email import RegistrationMail
 from .extensions import app_config, db, log, login_manager, pwd_context
-from .forms import LoginForm, SignupForm
+from .forms import LoginForm, SelfDestructForm, SignupForm
 from .models import User, character_list_loader, user_loader
 from .sso import EveSso
 
@@ -66,7 +68,7 @@ class Signup(MethodView):
 
     @staticmethod
     def get():
-        return render_template('signup.html', form=SignupForm())
+        return render_template('quickform.html', form=SignupForm())
 
     # noinspection PyTypeChecker
     @staticmethod
@@ -74,7 +76,7 @@ class Signup(MethodView):
         form = SignupForm()
         if not form.validate_on_submit():
             flash_form_errors(form)
-            return render_template('signup.html', form=form)
+            return render_template('quickform.html', form=form)
         email = form.email.data.strip()
         password = form.password.data
         token = str(uuid4())
@@ -87,6 +89,34 @@ class Signup(MethodView):
             '.activate', _external=True, email=email, token=token))
         flash('Registration successful, an activation email has been sent.',
               'success')
+        return redirect(url_for('.index'))
+
+
+class SelfDestruct(MethodView):
+    methods = ['GET', 'POST']
+
+    @flask_login.login_required
+    def get(self):
+        return render_template('selfdestruct.html', form=SelfDestructForm())
+
+    @flask_login.login_required
+    def post(self):
+        form = SelfDestructForm()
+        if not form.validate_on_submit():
+            flash_form_errors(form)
+            return render_template('selfdestruct.html', form=form)
+        user = request_loader(request)
+        if user:
+            flask_login.logout_user()
+            try:
+                user.delete_characters()
+                db.session.delete(user)
+                db.session.commit()
+                flash('Your account has been deleted.', 'success')
+                return redirect(url_for('.index'))
+            except SQLAlchemyError as e:
+                log.error('Error deleting account: {}'.format(e))
+        flash('Unable to delete your account.', 'danger')
         return redirect(url_for('.index'))
 
 
@@ -121,7 +151,7 @@ class Login(MethodView):
 
     @staticmethod
     def get():
-        return render_template('login.html', form=LoginForm())
+        return render_template('quickform.html', form=LoginForm())
 
     # noinspection PyTypeChecker
     @staticmethod
@@ -129,7 +159,7 @@ class Login(MethodView):
         form = LoginForm()
         if not form.validate_on_submit():
             flash_form_errors(form)
-            return render_template('login.html', form=form)
+            return render_template('quickform.html', form=form)
         user = request_loader(request)
         if user:
             flask_login.login_user(user)
@@ -192,7 +222,7 @@ def refresh_token(api, current_character):
         db.session.merge(current_character)
         db.session.commit()
     client = api.api_client
-    client.set_default_header('User-Agent', version.USER_AGENT)
+    client.set_default_header('User-Agent', app_config['USER_AGENT'])
     client.configuration.access_token = rt.token['access_token']
     return api
 
@@ -325,6 +355,8 @@ blueprint.add_url_rule('/dashboard/rm/<int:character_id>',
 blueprint.add_url_rule('/login', view_func=Login.as_view('login'))
 blueprint.add_url_rule('/logout', view_func=Logout.as_view('logout'))
 blueprint.add_url_rule('/signup', view_func=Signup.as_view('signup'))
+blueprint.add_url_rule('/selfdestruct',
+                       view_func=SelfDestruct.as_view('selfdestruct'))
 blueprint.add_url_rule('/character/<int:character_id>',
                        view_func=Character.as_view('character'))
 blueprint.add_url_rule(

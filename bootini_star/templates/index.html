@@ -1,6 +1,6 @@
-{% extends "bootstrap.html" %}
-{% block title %}Home{% endblock %}
-{% block body %}
+{% extends "bs.html" %}
+{% block bstitle %}Home{% endblock %}
+{% block bscontent %}
     <div class="container-fluid m-3">
         {% if current_user.is_authenticated %}
             <div class="row justify-content-md-center">

@@ -1,0 +1,47 @@
+{% extends "bs.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block bscontent %}
+    <div class="container-fluid">
+        <div class="row justify-content-md-center">
+            <form action="" method="post" id="form">
+                {{ form.hidden_tag() }}
+                {{ wtf.form_field(form.email) }}
+                {{ wtf.form_field(form.password) }}
+                <div class="row justify-content-md-center">
+                    <button type="button" class="btn btn-danger showModal" data-toggle="modal" data-target="#bsModal">
+                        Delete account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="bsModal" tabindex="-1" role="dialog" aria-labelledby="bsModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bsModalLabel">Delete account?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">Do you really want to delete your account? This action cannot be undone.</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="yesPlease">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript">
+        $(function () {
+            $("#yesPlease").on("click", function () {
+                $("#bsModal").modal("hide");
+                document.getElementById("form").submit();
+            });
+        });
+    </script>
+{% endblock %}

@@ -27,3 +27,9 @@ class SignupForm(FlaskForm):
         EqualTo('password', message='Password and confirmation must match.')
     ])
     submit = SubmitField('Sign me up')
+
+
+class SelfDestructForm(FlaskForm):
+    email = StringField(EMAIL_LABEL, validators=[Email(message=EMAIL_MSG)])
+    password = PasswordField(PW_LABEL, validators=[DataRequired(PW_MSG)])
+    # submit = SubmitField('Delete account')

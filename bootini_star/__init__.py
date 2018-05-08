@@ -12,10 +12,9 @@ import re
 from datetime import datetime
 
 from flask import Flask
+from flask_bootstrap import BOOTSTRAP_VERSION, Bootstrap, WebCDN
 from flask_migrate import Migrate
 
-from swagger_client.models.get_characters_character_id_mail_labels_label import \
-    GetCharactersCharacterIdMailLabelsLabel
 from .extensions import app_config, db, log, login_manager
 from .resource_views import StaticFileConverter, blueprint as res_blueprint
 from .sso_views import blueprint as sso_blueprint
@@ -34,6 +33,10 @@ if not isinstance(ln, int):
     raise ValueError("Invalid LOG_LEVEL '%s'" % ls)
 log.setLevel(ln)
 
+Bootstrap(app)
+cdns = app.extensions['bootstrap']['cdns']
+cdns['darkly'] = WebCDN(
+    '//stackpath.bootstrapcdn.com/bootswatch/%s/darkly/' % BOOTSTRAP_VERSION)
 db.init_app(app)
 migrate = Migrate(app, db)
 

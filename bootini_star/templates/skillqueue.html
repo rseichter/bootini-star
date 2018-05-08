@@ -1,8 +1,8 @@
-{% extends "bootstrap.html" %}
+{% extends "bs.html" %}
 {% if character_id %}
-    {% block title %}Skill queue of {{ eveCache.eve_character(character_id).name }}{% endblock %}
+    {% block bstitle %}Skill queue of {{ eveCache.eve_character(character_id).name }}{% endblock %}
 {% endif %}
-{% block body %}
+{% block bscontent %}
     {% if character_id and skillq %}
         <div class="container-fluid mx-1">
             <div class="table-responsive">

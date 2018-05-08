@@ -7,6 +7,8 @@ __author__ = 'Ralph Seichter'
 
 import os
 
+from bootini_star import version
+
 BAD = 'bad'
 DEVELOPMENT_DB_URI = 'postgresql://postgres:@localhost/bs'
 TEST_DB_URI = DEVELOPMENT_DB_URI + '_test'
@@ -19,6 +21,8 @@ class Config:
     If you need to change settings like ESI_CALLBACK_URI to address
     local requirements, use environment variables.
     """
+    VERSION = version.__version__
+    USER_AGENT = version.USER_AGENT
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'WARNING')
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
     SMTP_SERVER_URI = os.getenv('SMTP_SERVER_URI', '')

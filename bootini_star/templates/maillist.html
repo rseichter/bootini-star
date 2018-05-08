@@ -1,8 +1,8 @@
-{% extends "bootstrap.html" %}
+{% extends "bs.html" %}
 {% if character_id %}
-{% block title %}Mail of {{ eveCache.eve_character(character_id).name }}{% endblock %}
+{% block bstitle %}Mail of {{ eveCache.eve_character(character_id).name }}{% endblock %}
 {% endif %}
-{% block body %}
+{% block bscontent %}
     {% if character_id and maillist %}
         <div class="container-fluid mx-1">
             {% for label in labels %}

@@ -1,6 +1,7 @@
 """
 Tests for the application's views/routes.
 """
+
 __author__ = 'Ralph Seichter'
 
 import json
@@ -66,22 +67,25 @@ class AllViews(TestCase):
         TestCase.setUp(self)
         self.app = app.test_client()
 
-    def signup(self, email, password, confirm=''):
+    def signup(self, eml, pw, confirm=''):
+        data = dict(email=eml, password=pw, confirm=confirm)
         with app.app_context():
-            return self.app.post(url_for('bs.signup'),
-                                 data=dict(
-                                     email=email, password=password,
-                                     confirm=confirm),
+            return self.app.post(url_for('bs.signup'), data=data,
                                  follow_redirects=True)
 
-    def login(self, email, password, target=None):
+    def selfdestruct(self, eml, pw):
+        data = dict(email=eml, password=pw)
+        with app.app_context():
+            return self.app.post(url_for('bs.selfdestruct'), data=data,
+                                 follow_redirects=True)
+
+    def login(self, eml, pw, target=None):
+        data = dict(email=eml, password=pw)
         with app.app_context():
             url = url_for('bs.login')
             if target:
                 url = url + '?next=' + target
-            return self.app.post(url,
-                                 data=dict(email=email, password=password),
-                                 follow_redirects=True)
+            return self.app.post(url, data=data, follow_redirects=True)
 
     def logout(self):
         with app.app_context():
@@ -142,7 +146,7 @@ class AllViews(TestCase):
     def test_good_login(self):
         add_user2()
         resp = self.login(email2, password2)
-        self.assertTrue(b'Should you ever want' in resp.data)
+        self.assertTrue(b' to delete your account' in resp.data)
 
     def test_unsafe_target(self):
         add_user2()
@@ -183,6 +187,25 @@ class AllViews(TestCase):
         with self.assertRaises(sqlalchemy.exc.IntegrityError):
             self.signup(email2, password2, password2)
 
+    def test_selfdestruct_get(self):
+        add_user2()
+        self.login(email2, password2)
+        with app.app_context():
+            resp = self.app.get(url_for('bs.selfdestruct'))
+        self.assertTrue(b'really want to delete your account' in resp.data)
+
+    def test_selfdestruct(self):
+        add_user2()
+        self.login(email2, password2)
+        resp = self.selfdestruct(email2, password2)
+        self.assertTrue(b'account has been deleted' in resp.data)
+
+    def test_selfdestruct_invalid_data(self):
+        add_user2()
+        self.login(email2, password2)
+        resp = self.selfdestruct(email2, 'bad')
+        self.assertTrue(b'Unable to delete your account' in resp.data)
+
     def test_load_unknown_user(self):
         with app.app_context():
             self.assertIsNone(user_loader(email2))
@@ -192,7 +215,7 @@ class AllViews(TestCase):
         self.login(email2, password2)
         with app.app_context():
             resp = self.app.get(url_for('bs.dashboard'))
-        self.assertTrue(b'Should you ever want' in resp.data)
+        self.assertTrue(b' to delete your account' in resp.data)
 
     def test_maillist_invalid_id(self):
         add_user2()

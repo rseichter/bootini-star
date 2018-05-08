@@ -1,6 +1,6 @@
-{% extends "bootstrap.html" %}
-{% if mail %} {% block title %}{{ mail.subject }}{% endblock %} {% endif %}
-{% block body %}
+{% extends "bs.html" %}
+{% if mail %} {% block bstitle %}{{ mail.subject }}{% endblock %} {% endif %}
+{% block bscontent %}
 {% if mail %}
     <div class="container-fluid m-1">
         <div class="row">
@@ -40,7 +40,8 @@
     </div>
 {% endif %}
 {% endblock %}
-{% block javascript %}
+{% block scripts %}
+    {{ super() }}
     <script type="text/javascript">
         $(function () {
             $(".showModal").on("click", function () {

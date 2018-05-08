@@ -1,5 +1,5 @@
-{% extends "bootstrap.html" %}
-{% block body %}
+{% extends "bs.html" %}
+{% block bscontent %}
 {% if current_user.is_authenticated %}
     <!--suppress HtmlUnknownTarget -->
     <div class="container">
@@ -61,13 +61,15 @@
                                              src="static/EVE/eve-sso-login-black-large.png"/></a></p>
         </div>
         <div class="row justify-content-md-center text-muted small">
-            <p>Should you ever want your account deleted, please
-                <a href="mailto:{{ config.SMTP_SENDER_ADDRESS }}">send an email</a>.</p>
+            <p>Version {{ config.VERSION }} &middot; Click
+                <a href="{{ url_for('bs.selfdestruct') }}">here</a>
+                to delete your account.</p>
         </div>
     </div>
 {% endif %}
 {% endblock %}
-{% block javascript %}
+{% block scripts %}
+    {{ super() }}
     <script type="text/javascript">
         $(function () {
             $(".showModal").on("click", function () {

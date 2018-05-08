@@ -119,6 +119,13 @@ class User(db.Model, flask_login.UserMixin):
             character_id, owner=self.uuid)
         return self.current_character
 
+    def delete_characters(self):
+        """
+        Delete all characters owned by this user. Note that this method
+        does not commit the changes to DB.
+        """
+        delete_characters_by_owner(self.uuid)
+
 
 @login_manager.user_loader
 def user_loader(email: str) -> Optional[User]:
@@ -193,11 +200,19 @@ def character_loader(char_id: int, **kwargs) -> Optional[Character]:
         return None
 
 
-def character_list_loader(owner):
+def character_list_loader(owner: str):
     """
     Load all Character objects for the given owner.
 
-    :type owner: str
     :param owner: Owner's UUID.
     """
     return Character.query.filter_by(owner=owner).all()
+
+
+def delete_characters_by_owner(owner: str):
+    """
+    Delete all Character objects for the given owner.
+
+    :param owner: Owner's UUID.
+    """
+    return Character.query.filter_by(owner=owner).delete()
