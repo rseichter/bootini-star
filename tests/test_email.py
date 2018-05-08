@@ -20,11 +20,13 @@ class Mail(unittest.TestCase):
         headers = {'From': address, 'To': address}
         RegistrationMail().send(headers, UNITTEST_URL)
 
+    @skipUnlessOnline
     def test_regmail_to_unittest_address(self):
         address = app_config['SMTP_SENDER_ADDRESS']
         headers = {'From': address, 'To': email}
         RegistrationMail().send(headers, UNITTEST_URL)
 
+    @skipUnlessOnline
     def test_regmail_no_headers(self):
         headers = {}
         with self.assertRaises(TypeError):
