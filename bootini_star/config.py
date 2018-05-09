@@ -26,7 +26,6 @@ class Config:
     VERSION = version.__version__
     USER_AGENT = version.USER_AGENT
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'WARNING')
-    SERVER_NAME = os.getenv('SERVER_NAME', socket.getfqdn())
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
     SMTP_SERVER_URI = os.getenv('SMTP_SERVER_URI', '')
     SMTP_SENDER_ADDRESS = os.getenv('SMTP_SENDER_ADDRESS', '')
@@ -52,7 +51,8 @@ class Development(Config):
 
 
 class Testing(Config):
-    """Override Flask server name during local testing."""
+    """Testing requires SERVER_NAME for request indepentend URL generation."""
+    SERVER_NAME = os.getenv('SERVER_NAME', socket.getfqdn())
     DEBUG = True
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI',
