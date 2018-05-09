@@ -35,7 +35,7 @@ YOU_LOGGED_OUT = 'You are logged out.'
 eveCache = esi.IdNameCache()
 
 
-class InvalidUsage(Exception):
+class InvalidUsageError(Exception):
     status_code = 400
 
     def __init__(self, message, status_code=None, payload=None):
@@ -121,7 +121,7 @@ class ChangePassword(MethodView):
                 flash(PASSWORD_CHANGED, 'success')
                 return redirect(url_for('.dashboard'))
             except SQLAlchemyError as e:
-                log.error('Error changing your password: {}'.format(e))
+                log.error(f'Error changing your password: {e}')
         flash(PASSWORD_MISTYPED, 'warning')
         return render_template('quickform.html', form=form)
 
@@ -149,7 +149,7 @@ class SelfDestruct(MethodView):
                 flash(ACCOUNT_DELETED, 'success')
                 return redirect(url_for('.index'))
             except SQLAlchemyError as e:
-                log.error('Error deleting account: {}'.format(e))
+                log.error(f'Error deleting account: {e}')
         flash(ACCOUNT_DELETE_FAILED, 'danger')
         return redirect(url_for('.index'))
 
@@ -175,7 +175,7 @@ class Activate(MethodView):
                 flash('Your account is now active, please login.', 'success')
                 return redirect(url_for('.login'))
             except SQLAlchemyError as e:
-                log.error('Account activation failed: {}'.format(e))
+                log.error(f'Account activation failed: {e}')
         flash('Account activation failed.', 'danger')
         return redirect(url_for('.index'))
 
@@ -200,9 +200,7 @@ class Login(MethodView):
             nxt = request.args.get('next')
             if nxt:
                 if not is_safe_url(nxt):
-                    log.debug(nxt + ' is unsafe')
-                    raise InvalidUsage('Naughty redirect attempted')
-                log.debug(nxt + ' is safe')
+                    raise InvalidUsageError(f'Unsafe redirect target: {nxt}')
             return redirect(nxt or url_for('.dashboard'))
         flash(LOGIN_FAILED, 'danger')
         return redirect(url_for('.login'))
@@ -281,7 +279,7 @@ class MailList(MethodView):
     @flask_login.login_required
     def get(self, character_id, label=None):
         cc = current_user.load_character(character_id)
-        if cc:
+        if cc:  # pragma: no cover (Needs live character)
             api = mail_api(cc)
             kwargs = {'labels': [label]} if isinstance(label, int) else {}
             try:
@@ -328,7 +326,7 @@ class RemoveMail(MethodView):
     @flask_login.login_required
     def get(self, character_id: int, mail_id: int):
         cc = current_user.load_character(character_id)
-        if cc:
+        if cc:  # pragma: no cover (Needs live character)
             api = mail_api(cc)
             try:
                 api.delete_characters_character_id_mail_mail_id(
@@ -363,7 +361,7 @@ class Skills(MethodView):
     @flask_login.login_required
     def get(self, character_id):
         cc = current_user.load_character(character_id)
-        if cc:
+        if cc:  # pragma: no cover (Needs live character)
             api = skills_api(cc)
             try:
                 rv = api.get_characters_character_id_skillqueue(character_id)
@@ -415,16 +413,14 @@ def request_loader(req):
         if user.may_login():
             if req.form['password']:
                 if pwd_context.verify(req.form['password'], user.password):
-                    log.info("User '%s' (level %d) logged in" %
-                             (user.email, user.level))
+                    log.info(f'User {email} (level {user.level}) logged in')
                     return user
                 else:
-                    log.warning("User '%s' password mismatch" % user.email)
+                    log.warning(f'User {email} password mismatch')
             else:
                 log.error('No password in request object')
         else:
-            log.warning("User '%s' may not login (level %d)" %
-                        (user.email, user.level))
+            log.warning(f'User {email} (level {user.level}) may not login')
     elif email:
-        log.warning("Unknown user '%s'" % email)
+        log.warning(f'Unknown user {email}')
     return None

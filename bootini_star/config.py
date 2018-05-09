@@ -6,12 +6,14 @@ should be overridden by using these env variables.
 __author__ = 'Ralph Seichter'
 
 import os
+import socket
 
 from bootini_star import version
 
 BAD = 'bad'
-DEVELOPMENT_DB_URI = 'postgresql://postgres:@localhost/bs'
-TEST_DB_URI = DEVELOPMENT_DB_URI + '_test'
+
+DEFAULT_DEVELOPMENT_DB_URI = 'postgresql://postgres:@localhost/bs'
+DEFAULT_TESTING_DB_URI = DEFAULT_DEVELOPMENT_DB_URI + '_test'
 
 
 class Config:
@@ -24,8 +26,7 @@ class Config:
     VERSION = version.__version__
     USER_AGENT = version.USER_AGENT
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'WARNING')
-    THEME_CDN_URI = os.getenv('THEME_CDN_URI',
-                              '//stackpath.bootstrapcdn.com/bootswatch/4.1.1/darkly/')
+    SERVER_NAME = os.getenv('SERVER_NAME', socket.getfqdn())
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
     SMTP_SERVER_URI = os.getenv('SMTP_SERVER_URI', '')
     SMTP_SENDER_ADDRESS = os.getenv('SMTP_SENDER_ADDRESS', '')
@@ -45,16 +46,17 @@ class Development(Config):
     """Enable debugging during development."""
     DEBUG = True
     TESTING = False
-    SQLALCHEMY_ECHO = False
-    SQLALCHEMY_DATABASE_URI = DEVELOPMENT_DB_URI
+    # SQLALCHEMY_ECHO = True
+    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI',
+                                        DEFAULT_DEVELOPMENT_DB_URI)
 
 
 class Testing(Config):
     """Override Flask server name during local testing."""
     DEBUG = True
     TESTING = True
-    SERVER_NAME = 'Argon.local'
-    SQLALCHEMY_DATABASE_URI = TEST_DB_URI
+    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI',
+                                        DEFAULT_TESTING_DB_URI)
     WTF_CSRF_ENABLED = False
 
 
@@ -62,3 +64,4 @@ class Production(Config):
     """Use environment variables to define your production settings."""
     DEBUG = False
     TESTING = False
+    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')

@@ -131,12 +131,11 @@ class IdNameCache(CacheBase):
             else:
                 unknown_ids.append(char_id)
         if unknown_ids:
-            log.debug('Querying ESI for character IDs {}'.format(unknown_ids))
+            log.debug(f'Querying ESI for character IDs {unknown_ids}')
             eve_characters: List[
                 GetCharactersNames200Ok] = swagger_client.CharacterApi().get_characters_names(unknown_ids)
             for ec in eve_characters:
-                known_characters.add(
-                    self.add(ec.character_id, ec.character_name))
+                known_characters.add(self.add(ec.character_id, ec.character_name))
         return known_characters
 
     @staticmethod
@@ -159,7 +158,7 @@ def get_mail_labels(api: swagger_client.MailApi,
     :param api: Mail API
     :param character_id: Character ID
     """
-    log.debug('get_mail_labels: %d' % character_id)
+    log.debug(f'get_mail_labels {character_id}')
     return api.get_characters_character_id_mail_labels(character_id)
 
 
@@ -172,7 +171,7 @@ def get_mail_list(api: swagger_client.MailApi, character_id: int, **kwargs) -> \
     :param api: Mail API
     :param character_id: Character ID
     """
-    log.debug('get_mail_list: %d' % character_id)
+    log.debug(f'get_mail_list {character_id}')
     return api.get_characters_character_id_mail(character_id, **kwargs)
 
 
@@ -184,5 +183,5 @@ def get_character(api: swagger_client.CharacterApi,
     :param api: Character API
     :param character_id: Character ID
     """
-    log.debug('get_character: %d' % character_id)
+    log.debug(f'get_character {character_id}')
     return api.get_characters_character_id(character_id)

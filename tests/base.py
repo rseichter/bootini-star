@@ -92,11 +92,10 @@ class TestCase(unittest.TestCase):
             self.fail('Unexpected return code ' + str(response.status_code))
         location = response.headers.get('Location')
         if not re.match(relative_url, location, re.RegexFlag.IGNORECASE):
-            msg = self._formatMessage(
-                "%s does not start with %s" % (
-                    safe_repr(location), safe_repr(relative_url)),
-                'unexpected redirect target'
-            )
+            loc = safe_repr(location)
+            url = safe_repr(relative_url)
+            msg = self._formatMessage(f'{loc} does not start with {url}',
+                                      'unexpected redirect target')
             raise self.failureException(msg)
 
 

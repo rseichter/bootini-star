@@ -53,7 +53,7 @@ class ESI(TestCase):
                 elif c.id == eulynn_id:
                     self.assertEqual(c.name, 'Eulynn')
                 else:
-                    self.fail('Unexpected ID: %d' % c.id)
+                    self.fail(f'Unexpected ID {c.id}')
 
     @skipUnlessOnline
     def test_eve_char_cached(self):

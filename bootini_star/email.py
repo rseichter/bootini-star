@@ -61,9 +61,9 @@ class _Mail:
             if self.username:
                 smtp.starttls()
                 smtp.login(self.username, self.password)
-            to = headers['To'] if 'To' in headers else None
-            if is_unittest_address(to):
-                log.debug('Skipping mail to <%s>' % to)
+            recipient = headers['To'] if 'To' in headers else None
+            if is_unittest_address(recipient):
+                log.debug(f'Skipping mail to {recipient}')
             else:
                 smtp.send_message(em)
 

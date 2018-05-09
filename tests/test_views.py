@@ -15,7 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from bootini_star import app, forms, views
 from bootini_star.extensions import app_config, db
 from bootini_star.models import Character, User
-from bootini_star.views import InvalidUsage, user_loader
+from bootini_star.views import InvalidUsageError, user_loader
 from .base import TestCase, TestUser, chribba_id, skipUnlessOnline
 from .base import character_id, character_name
 from .base import email, email2, email3, email4
@@ -66,8 +66,8 @@ class AllViews(TestCase):
         self.app = app.test_client()
 
     def assertAppVersion(self, response):
-        version = 'Version %s ' % app_config['VERSION']
-        self.assertSubstr(version, response)
+        ver = app_config['VERSION']
+        self.assertSubstr(f' version {ver}', response)
 
     def assertSubstr(self, string: str, response):
         if not (response and response.data):
@@ -168,7 +168,7 @@ class AllViews(TestCase):
 
     def test_unsafe_target(self):
         add_user2()
-        with self.assertRaises(InvalidUsage):
+        with self.assertRaises(InvalidUsageError):
             self.login(email2, password2, target=r'http://python.org')
 
     def test_logout(self):
@@ -425,8 +425,8 @@ class AllViews(TestCase):
 
     def test_invalid_usage(self):
         try:
-            raise InvalidUsage(password, status_code=432)
-        except InvalidUsage as e:
+            raise InvalidUsageError(password, status_code=432)
+        except InvalidUsageError as e:
             self.assertEqual(e.message, password)
             self.assertEqual(e.status_code, 432)
 
