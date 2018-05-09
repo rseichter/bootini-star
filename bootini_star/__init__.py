@@ -35,8 +35,7 @@ log.setLevel(ln)
 
 Bootstrap(app)
 cdns = app.extensions['bootstrap']['cdns']
-cdns['darkly'] = WebCDN(
-    '//stackpath.bootstrapcdn.com/bootswatch/%s/darkly/' % BOOTSTRAP_VERSION)
+cdns['darkly'] = WebCDN(app.config['THEME_CDN_URI'])
 db.init_app(app)
 migrate = Migrate(app, db)
 

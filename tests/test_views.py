@@ -1,19 +1,18 @@
 """
 Tests for the application's views/routes.
 """
-
 __author__ = 'Ralph Seichter'
 
 import json
-import time
 import unittest
 from uuid import uuid4
 
 import sqlalchemy
+import time
 from flask.helpers import url_for
 from sqlalchemy.exc import IntegrityError
 
-from bootini_star import app
+from bootini_star import app, forms, views
 from bootini_star.extensions import app_config, db
 from bootini_star.models import Character, User
 from bootini_star.views import InvalidUsage, user_loader
@@ -62,10 +61,24 @@ def add_user4():
 
 
 class AllViews(TestCase):
-
     def setUp(self):
         TestCase.setUp(self)
         self.app = app.test_client()
+
+    def assertAppVersion(self, response):
+        version = 'Version %s ' % app_config['VERSION']
+        self.assertSubstr(version, response)
+
+    def assertSubstr(self, string: str, response):
+        if not (response and response.data):
+            self.fail('Invalid response object')
+        self.assertTrue(string.encode('utf-8') in response.data)
+
+    def pwchange(self, current, pw, confirm=''):
+        data = dict(current=current, password=pw, confirm=confirm)
+        with app.app_context():
+            return self.app.post(url_for('bs.password'), data=data,
+                                 follow_redirects=True)
 
     def signup(self, eml, pw, confirm=''):
         data = dict(email=eml, password=pw, confirm=confirm)
@@ -138,15 +151,20 @@ class AllViews(TestCase):
             resp = self.app.get(url_for('bs.character', character_id=93779241))
         self.assertTrue(b'Gallente Citizen 93779241' in resp.data)
 
-    def test_bad_login(self):
+    def test_bad_login_email(self):
+        add_user2()
+        resp = self.login('', password2)
+        self.assertSubstr(forms.EMAIL_MSG, resp)
+
+    def test_bad_login_pw(self):
         add_user2()
         resp = self.login(email2, '!' + password2)
-        self.assertTrue(b'Your login was not successful' in resp.data)
+        self.assertSubstr(views.LOGIN_FAILED, resp)
 
     def test_good_login(self):
         add_user2()
         resp = self.login(email2, password2)
-        self.assertTrue(b' to delete your account' in resp.data)
+        self.assertAppVersion(resp)
 
     def test_unsafe_target(self):
         add_user2()
@@ -157,12 +175,12 @@ class AllViews(TestCase):
         add_user2()
         self.login(email2, password2)
         resp = self.logout()
-        self.assertTrue(b'You are logged out' in resp.data)
+        self.assertSubstr(views.YOU_LOGGED_OUT, resp)
 
     def test_signup_get(self):
         with app.app_context():
             resp = self.app.get(url_for('bs.signup'))
-        self.assertTrue(b'Confirm password' in resp.data)
+        self.assertSubstr(forms.CPW_LABEL, resp)
 
     @skipUnlessOnline
     def test_signup(self):
@@ -172,20 +190,45 @@ class AllViews(TestCase):
 
     def test_signup_mismatch(self):
         resp = self.signup(email2, password2, confirm="not" + password2)
-        self.assertTrue(b'Password and confirmation must match' in resp.data)
+        self.assertSubstr(forms.MATCH_MSG, resp)
 
     def test_signup_incomplete(self):
         resp = self.signup(email2, password2)
-        self.assertTrue(b'Password confirmation is required' in resp.data)
+        self.assertSubstr(forms.CPW_MSG, resp)
 
     def test_signup_bad_email(self):
         resp = self.signup('a@b', password2, password2)
-        self.assertTrue(b'Valid email address is required' in resp.data)
+        self.assertSubstr(forms.EMAIL_MSG, resp)
 
     def test_signup_existing(self):
         add_user2()
         with self.assertRaises(sqlalchemy.exc.IntegrityError):
             self.signup(email2, password2, password2)
+
+    def test_change_pw_get(self):
+        add_user2()
+        self.login(email2, password2)
+        with app.app_context():
+            resp = self.app.get(url_for('bs.password'))
+        self.assertSubstr(forms.CURRENT_LABEL, resp)
+
+    def test_change_pw(self):
+        add_user2()
+        self.login(email2, password2)
+        resp = self.pwchange(password2, password, password)
+        self.assertSubstr(views.PASSWORD_CHANGED, resp)
+
+    def test_change_pw_wrong_current(self):
+        add_user2()
+        self.login(email2, password2)
+        resp = self.pwchange(password3, password, password)
+        self.assertSubstr(views.PASSWORD_MISTYPED, resp)
+
+    def test_change_pw_missing_current(self):
+        add_user2()
+        self.login(email2, password2)
+        resp = self.pwchange('', password, password)
+        self.assertSubstr(forms.CURRENT_MSG, resp)
 
     def test_selfdestruct_get(self):
         add_user2()
@@ -198,13 +241,20 @@ class AllViews(TestCase):
         add_user2()
         self.login(email2, password2)
         resp = self.selfdestruct(email2, password2)
-        self.assertTrue(b'account has been deleted' in resp.data)
+        self.assertSubstr(views.ACCOUNT_DELETED, resp)
 
-    def test_selfdestruct_invalid_data(self):
+    def test_selfdestruct_invalid_mail(self):
+        add_user2()
+        self.login(email2, password2)
+        resp = self.selfdestruct('', password2)
+        self.assertSubstr(forms.EMAIL_MSG, resp)
+
+    def test_selfdestruct_bad_pw(self):
         add_user2()
         self.login(email2, password2)
         resp = self.selfdestruct(email2, 'bad')
-        self.assertTrue(b'Unable to delete your account' in resp.data)
+        self.assertTrue(
+            views.ACCOUNT_DELETE_FAILED.encode('utf-8') in resp.data)
 
     def test_load_unknown_user(self):
         with app.app_context():
@@ -215,7 +265,7 @@ class AllViews(TestCase):
         self.login(email2, password2)
         with app.app_context():
             resp = self.app.get(url_for('bs.dashboard'))
-        self.assertTrue(b' to delete your account' in resp.data)
+        self.assertAppVersion(resp)
 
     def test_maillist_invalid_id(self):
         add_user2()

@@ -7,10 +7,26 @@ from flask_wtf import FlaskForm
 from wtforms import PasswordField, StringField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo
 
+CPW_LABEL = 'Confirm password'
+CPW_MSG = 'Password confirmation is required.'
+CURRENT_LABEL = 'Current password'
+CURRENT_MSG = 'Current password is required.'
 EMAIL_LABEL = 'Email address'
 EMAIL_MSG = 'Valid email address is required.'
+MATCH_MSG = 'Password and confirmation must match.'
 PW_LABEL = 'Password'
 PW_MSG = 'Password is required.'
+
+
+class ChangePasswordForm(FlaskForm):
+    current = PasswordField(CURRENT_LABEL, validators=[
+        DataRequired(CURRENT_MSG)])
+    password = PasswordField(PW_LABEL, validators=[DataRequired(PW_MSG)])
+    confirm = PasswordField(CPW_LABEL, validators=[
+        DataRequired(CPW_MSG),
+        EqualTo('password', message=MATCH_MSG)
+    ])
+    submit = SubmitField('Change password')
 
 
 class LoginForm(FlaskForm):
@@ -22,9 +38,9 @@ class LoginForm(FlaskForm):
 class SignupForm(FlaskForm):
     email = StringField(EMAIL_LABEL, validators=[Email(message=EMAIL_MSG)])
     password = PasswordField(PW_LABEL, validators=[DataRequired(PW_MSG)])
-    confirm = PasswordField('Confirm password', validators=[
-        DataRequired('Password confirmation is required.'),
-        EqualTo('password', message='Password and confirmation must match.')
+    confirm = PasswordField(CPW_LABEL, validators=[
+        DataRequired(CPW_MSG),
+        EqualTo('password', message=MATCH_MSG)
     ])
     submit = SubmitField('Sign me up')
 
@@ -32,4 +48,3 @@ class SignupForm(FlaskForm):
 class SelfDestructForm(FlaskForm):
     email = StringField(EMAIL_LABEL, validators=[Email(message=EMAIL_MSG)])
     password = PasswordField(PW_LABEL, validators=[DataRequired(PW_MSG)])
-    # submit = SubmitField('Delete account')

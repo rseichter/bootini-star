@@ -24,6 +24,8 @@ class Config:
     VERSION = version.__version__
     USER_AGENT = version.USER_AGENT
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'WARNING')
+    THEME_CDN_URI = os.getenv('THEME_CDN_URI',
+                              '//stackpath.bootstrapcdn.com/bootswatch/4.1.1/darkly/')
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
     SMTP_SERVER_URI = os.getenv('SMTP_SERVER_URI', '')
     SMTP_SENDER_ADDRESS = os.getenv('SMTP_SENDER_ADDRESS', '')

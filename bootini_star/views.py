@@ -2,8 +2,6 @@
 Application views/routes are based on Flask's MethodView. All primary views are
 combined into a Flask blueprint.
 """
-from sqlalchemy.exc import SQLAlchemyError
-
 __author__ = 'Ralph Seichter'
 
 import json
@@ -16,15 +14,23 @@ from flask import Blueprint, flash, redirect, request, url_for
 from flask.templating import render_template
 from flask.views import MethodView, View
 from flask_login.utils import current_user
+from sqlalchemy.exc import SQLAlchemyError
 
 import swagger_client
 from bootini_star import esi
 from swagger_client.rest import ApiException
 from .email import RegistrationMail
 from .extensions import app_config, db, log, login_manager, pwd_context
-from .forms import LoginForm, SelfDestructForm, SignupForm
+from .forms import ChangePasswordForm, LoginForm, SelfDestructForm, SignupForm
 from .models import User, character_list_loader, user_loader
 from .sso import EveSso
+
+ACCOUNT_DELETE_FAILED = 'Unable to delete your account.'
+ACCOUNT_DELETED = 'Your account has been deleted.'
+LOGIN_FAILED = 'Your login was not successful.'
+PASSWORD_CHANGED = 'Your password was changed.'
+PASSWORD_MISTYPED = 'You may have mistyped your current password.'
+YOU_LOGGED_OUT = 'You are logged out.'
 
 eveCache = esi.IdNameCache()
 
@@ -92,6 +98,34 @@ class Signup(MethodView):
         return redirect(url_for('.index'))
 
 
+class ChangePassword(MethodView):
+    methods = ['GET', 'POST']
+
+    @flask_login.login_required
+    def get(self):
+        return render_template('quickform.html', form=ChangePasswordForm())
+
+    @flask_login.login_required
+    def post(self):
+        form = ChangePasswordForm()
+        if not form.validate_on_submit():
+            flash_form_errors(form)
+            return render_template('quickform.html', form=form)
+        current = form.current.data
+        password = form.password.data
+        if pwd_context.verify(current, current_user.password):
+            current_user.password = pwd_context.hash(password)
+            try:
+                db.session.merge(current_user)
+                db.session.commit()
+                flash(PASSWORD_CHANGED, 'success')
+                return redirect(url_for('.dashboard'))
+            except SQLAlchemyError as e:
+                log.error('Error changing your password: {}'.format(e))
+        flash(PASSWORD_MISTYPED, 'warning')
+        return render_template('quickform.html', form=form)
+
+
 class SelfDestruct(MethodView):
     methods = ['GET', 'POST']
 
@@ -112,11 +146,11 @@ class SelfDestruct(MethodView):
                 user.delete_characters()
                 db.session.delete(user)
                 db.session.commit()
-                flash('Your account has been deleted.', 'success')
+                flash(ACCOUNT_DELETED, 'success')
                 return redirect(url_for('.index'))
             except SQLAlchemyError as e:
                 log.error('Error deleting account: {}'.format(e))
-        flash('Unable to delete your account.', 'danger')
+        flash(ACCOUNT_DELETE_FAILED, 'danger')
         return redirect(url_for('.index'))
 
 
@@ -140,7 +174,7 @@ class Activate(MethodView):
                 db.session.commit()
                 flash('Your account is now active, please login.', 'success')
                 return redirect(url_for('.login'))
-            except Exception as e:
+            except SQLAlchemyError as e:
                 log.error('Account activation failed: {}'.format(e))
         flash('Account activation failed.', 'danger')
         return redirect(url_for('.index'))
@@ -170,7 +204,7 @@ class Login(MethodView):
                     raise InvalidUsage('Naughty redirect attempted')
                 log.debug(nxt + ' is safe')
             return redirect(nxt or url_for('.dashboard'))
-        flash('Your login was not successful.', 'danger')
+        flash(LOGIN_FAILED, 'danger')
         return redirect(url_for('.login'))
 
 
@@ -180,7 +214,7 @@ class Logout(MethodView):
     @flask_login.login_required
     def get(self):
         flask_login.logout_user()
-        flash('You are logged out.', 'success')
+        flash(YOU_LOGGED_OUT, 'success')
         return redirect(url_for('.index'))
 
 
@@ -349,6 +383,8 @@ blueprint.add_url_rule(
     '/', view_func=RenderTemplate.as_view('index', template='index.html'))
 blueprint.add_url_rule('/activate/<string:email>/<string:token>',
                        view_func=Activate.as_view('activate'))
+blueprint.add_url_rule('/password',
+                       view_func=ChangePassword.as_view('password'))
 blueprint.add_url_rule('/dashboard', view_func=Dashboard.as_view('dashboard'))
 blueprint.add_url_rule('/dashboard/rm/<int:character_id>',
                        view_func=RemoveCharacter.as_view('rmcharacter'))
