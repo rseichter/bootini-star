@@ -4,8 +4,9 @@ Model classes and related helper functions. SQLAlchemy is used for ORM.
 __author__ = 'Ralph Seichter'
 
 import datetime
+import enum
 import json
-from typing import Dict, Optional
+from typing import Optional
 
 import flask_login
 from sqlalchemy import BigInteger, Column, DateTime, event
@@ -53,6 +54,14 @@ def mysql_utcnow(element, compiler, **kwargs):
     return 'CURRENT_TIMESTAMP()'
 
 
+@enum.unique
+class UserLevel(enum.IntEnum):
+    INACTIVE = 0
+    REGISTERED = 1
+    DEFAULT = 2
+    ADMIN = 100
+
+
 class User(db.Model, flask_login.UserMixin):
     """
     Model class representing an application user.
@@ -68,39 +77,42 @@ class User(db.Model, flask_login.UserMixin):
     """
     __tablename__ = "users"
 
-    valid_levels: Dict[str, int] = {
-        'inactive': 0,
-        'registered': 1,
-        'default': 2,
-        'admin': 100,
-    }
-
     email = Column(String(256), primary_key=True, nullable=False)
     password = Column(String(90), nullable=False)
     uuid = Column(String(40), nullable=False, unique=True)
     registered_at = Column(DateTime, nullable=False, server_default=UtcNow())
     modified_at = Column(DateTime, nullable=False, server_default=UtcNow())
-    level = Column(SmallInteger, nullable=False)
+    _level = Column('level', SmallInteger, nullable=False)
     activation_token = Column(String(40))
     eve_characters = relationship('Character', backref='user', lazy=True)
 
-    def __init__(self, email, password, uuid, level=None,
-                 activation_token=None):
+    def __init__(self, email, password, uuid, activation_token=None):
         self.email = email
         self.password = pwd_context.hash(password)
         self.uuid = uuid
-        self.level = level if level else self.valid_levels['inactive']
         if activation_token:
             self.activation_token = activation_token
         self._current_character = None
 
-    # Required for flask_login
     def get_id(self):
         """Use email as ID (method required by Flask-Login)."""
         return self.email
 
+    def is_admin(self):
+        return self.level >= UserLevel.ADMIN
+
     def may_login(self):
-        return self.level >= self.valid_levels['default']
+        return self.level >= UserLevel.DEFAULT
+
+    @property
+    def level(self):
+        return self._level
+
+    @level.setter
+    def level(self, x):
+        if not isinstance(x, int):
+            x = int(x)
+        self._level = int(x)
 
     @property
     def current_character(self):

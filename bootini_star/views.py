@@ -22,7 +22,8 @@ from swagger_client.rest import ApiException
 from .email import RegistrationMail
 from .extensions import app_config, db, log, pwd_context
 from .forms import ChangePasswordForm, LoginForm, SelfDestructForm, SignupForm
-from .models import User, character_list_loader, request_loader, user_loader
+from .models import User, UserLevel
+from .models import character_list_loader, request_loader, user_loader
 from .sso import EveSso
 
 ACCOUNT_DELETE_FAILED = 'Unable to delete your account.'
@@ -86,8 +87,8 @@ class Signup(MethodView):
         email = form.email.data.strip()
         password = form.password.data
         token = str(uuid4())
-        user = User(email, password, str(uuid4()), level=User.valid_levels[
-            'registered'], activation_token=token)
+        user = User(email, password, str(uuid4()), activation_token=token)
+        user.level = UserLevel.REGISTERED
         db.session.add(user)
         db.session.commit()
         log.info(f'User {user.uuid} signed up')
@@ -172,7 +173,7 @@ class Activate(MethodView):
         user = user_loader(email)
         if user and user.activation_token == token:
             user.activation_token = ''
-            user.level = user.valid_levels['default']
+            user.level = UserLevel.DEFAULT
             try:
                 db.session.merge(user)
                 db.session.commit()
@@ -318,8 +319,7 @@ class Mail(MethodView):
                 rv = api.get_characters_character_id_mail_mail_id(
                     character_id, mail_id)
                 # Include mail object dump for admins only
-                what = None if current_user.level < User.valid_levels[
-                    'admin'] else vars(rv)
+                what = vars(rv) if current_user.is_admin() else None
                 return render_template('mail.html', character_id=character_id,
                                        mail_id=mail_id, eveCache=eveCache,
                                        mail=rv, what=what)

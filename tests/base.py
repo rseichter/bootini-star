@@ -7,18 +7,18 @@ import ast
 import json
 import os
 import re
-import time
 import unittest
 import warnings
 from unittest.util import safe_repr
 from uuid import uuid4
 
+import time
 from flask.wrappers import Response
 
 from bootini_star import app, version
 from bootini_star.email import unittest_address
 from bootini_star.extensions import db
-from bootini_star.models import Character, User
+from bootini_star.models import Character, User, UserLevel
 
 user_agent = version.USER_AGENT + ' Unittest'
 
@@ -50,10 +50,9 @@ skipUnlessOnline = unittest.skipUnless(ast.literal_eval(
 
 class TestUser(User):
 
-    def __init__(self, email, password, uuid,
-                 level=User.valid_levels['default'], activation_token=None):
-        super().__init__(email, password, uuid, level=level,
-                         activation_token=activation_token)
+    def __init__(self, email, password, uuid, token=None):
+        super().__init__(email, password, uuid, activation_token=token)
+        self.level = UserLevel.DEFAULT
 
 
 class TestCase(unittest.TestCase):

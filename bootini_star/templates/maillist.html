@@ -34,7 +34,11 @@
                             </a>
                         <td>
                             <a href="{{ url_for('bs.mail', character_id=character_id, mail_id=mail.mail_id) }}">
-                                {{ mail.subject }}
+                                {% if mail.is_read %}
+                                    {{ mail.subject }}
+                                {% else %}
+                                    <em>{{ mail.subject }}</em>
+                                {% endif %}
                             </a>
                         </td>
                         <td>{{ mail.timestamp | eve_time }}</td>

@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 
 from bootini_star import app, forms, views
 from bootini_star.extensions import app_config, db
-from bootini_star.models import Character, User
+from bootini_star.models import Character, UserLevel
 from bootini_star.views import InvalidUsageError, user_loader
 from .base import TestCase, TestUser, chribba_id, skipUnlessOnline
 from .base import character_id, character_name
@@ -53,8 +53,8 @@ def add_user3():
 def add_user4():
     with app.app_context():
         user = TestUser(email=email4, password=password4, uuid=str(uuid4()),
-                        level=User.valid_levels['registered'],
-                        activation_token=token4)
+                        token=token4)
+        user.level = UserLevel.REGISTERED
         db.session.add(user)
         db.session.commit()
         return user
