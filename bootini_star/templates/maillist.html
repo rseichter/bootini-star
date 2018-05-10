@@ -1,6 +1,6 @@
 {% extends "bs.html" %}
 {% if character_id %}
-{% block bstitle %}Mail of {{ eveCache.eve_character(character_id).name }}{% endblock %}
+    {% block bstitle %}Mail of {{ eveCache.eve_character(character_id).name }}{% endblock %}
 {% endif %}
 {% block bscontent %}
     {% if character_id and maillist %}
@@ -12,6 +12,9 @@
                         ({{ label.unread_count }})
                     {% endif %}
                 </a> &middot;
+            {% endfor %}
+            {% for sub in subscriptions %}
+                {{ sub.name }} &middot;
             {% endfor %}
             <a href="{{ url_for('bs.maillist', character_id=character_id) }}">All</a>
             <table class="table table-striped">
@@ -39,6 +42,10 @@
                 {% endfor %}
                 </tbody>
             </table>
+        </div>
+    {% else %}
+        <div class="row justify-content-md-center">
+            <p>No mail matches the search criteria.</p>
         </div>
     {% endif %}
 {% endblock %}

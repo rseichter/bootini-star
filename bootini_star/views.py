@@ -290,10 +290,9 @@ class MailList(MethodView):
             kwargs = {'labels': [label]} if isinstance(label, int) else {}
             try:
                 labels = esi.get_mail_labels(api, character_id)
-                mails = esi.get_mail_list(api, character_id, **kwargs)
-                mail_ids = set()
-                for mail in mails:
-                    mail_ids.add(mail._from)
+                mlsubs = esi.get_mail_lists(api, character_id)
+                mails = esi.get_mails(api, character_id, **kwargs)
+                mail_ids = {m._from for m in mails}
                 eveCache.eve_characters(mail_ids)
             except ApiException as e:
                 return api_fail(e)
@@ -301,7 +300,7 @@ class MailList(MethodView):
             sm = sorted(mails, key=attrgetter('timestamp'), reverse=True)
             return render_template('maillist.html', eveCache=eveCache,
                                    character_id=character_id, labels=sl,
-                                   maillist=sm)
+                                   maillist=sm, subscriptions=mlsubs)
         else:
             flash('Please select one of your characters.', 'warning')
         return redirect(url_for('.dashboard'))
@@ -318,9 +317,34 @@ class Mail(MethodView):
             try:
                 rv = api.get_characters_character_id_mail_mail_id(
                     character_id, mail_id)
-                return render_template('mail.html', eveCache=eveCache, mail=rv)
+                # Include mail object dump for admins only
+                what = None if current_user.level < User.valid_levels[
+                    'admin'] else vars(rv)
+                return render_template('mail.html', character_id=character_id,
+                                       mail_id=mail_id, eveCache=eveCache,
+                                       mail=rv, what=what)
             except ApiException as e:
                 return api_fail(e)
+        else:
+            flash('Please select one of your characters.', 'warning')
+        return redirect(url_for('.dashboard'))
+
+
+class MarkMailRead(MethodView):
+    methods = ['GET']
+
+    @flask_login.login_required
+    def get(self, character_id: int, mail_id: int, read: int):
+        cc = current_user.load_character(character_id)
+        if cc:  # pragma: no cover (Needs live character)
+            api = mail_api(cc)
+            try:
+                status = 'read' if read else 'unread'
+                esi.mark_mail_read(api, character_id, mail_id, read)
+                flash(f'Mail has been marked as {status}.', 'success')
+            except ApiException as e:
+                return api_fail(e)
+            return redirect(url_for('.maillist', character_id=character_id))
         else:
             flash('Please select one of your characters.', 'warning')
         return redirect(url_for('.dashboard'))
@@ -405,6 +429,8 @@ blueprint.add_url_rule(
     '/mail/<int:character_id>/<int:mail_id>', view_func=Mail.as_view('mail'))
 blueprint.add_url_rule('/mail/rm/<int:character_id>/<int:mail_id>',
                        view_func=RemoveMail.as_view('rmmail'))
+blueprint.add_url_rule('/mail/rd/<int:character_id>/<int:mail_id>/<int:read>',
+                       view_func=MarkMailRead.as_view('mailread'))
 blueprint.add_url_rule('/maillist/<int:character_id>/<int:label>',
                        view_func=MailList.as_view('maillabel'))
 blueprint.add_url_rule('/maillist/<int:character_id>',

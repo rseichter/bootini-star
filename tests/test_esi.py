@@ -12,7 +12,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 import swagger_client
 from bootini_star import app
-from bootini_star.esi import IdNameCache, get_mail_list, get_mail_labels
+from bootini_star.esi import IdNameCache, get_mails, get_mail_labels
 from swagger_client.rest import ApiException
 from .base import TestCase, chribba_id, eulynn_id, skipUnlessOnline, user_agent
 
@@ -80,7 +80,7 @@ class ESI(TestCase):
 
     def test_get_mail_list(self):
         with self.assertRaises(ApiException):
-            get_mail_list(swagger_client.MailApi(), 456)
+            get_mails(swagger_client.MailApi(), 456)
 
     @skipUnlessOnline
     def test_get_universe_regions(self):

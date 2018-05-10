@@ -9,15 +9,12 @@ from typing import List, Optional, Set
 from sqlalchemy import BigInteger, Column, ForeignKey, String, Text
 from sqlalchemy.orm import relationship
 
-import swagger_client
-from swagger_client.models.get_characters_character_id_mail_200_ok import \
-    GetCharactersCharacterIdMail200Ok
-from swagger_client.models.get_characters_character_id_mail_labels_ok import \
-    GetCharactersCharacterIdMailLabelsOk
-from swagger_client.models.get_characters_character_id_ok import \
-    GetCharactersCharacterIdOk
-from swagger_client.models.get_characters_names_200_ok import \
-    GetCharactersNames200Ok
+from swagger_client import CharacterApi, MailApi
+from swagger_client import GetCharactersCharacterIdMail200Ok
+from swagger_client import GetCharactersCharacterIdMailLabelsOk
+from swagger_client import GetCharactersCharacterIdMailLists200Ok
+from swagger_client import GetCharactersCharacterIdOk
+from swagger_client import PutCharactersCharacterIdMailMailIdContents
 from .extensions import db, log
 
 
@@ -73,25 +70,21 @@ class CacheBase:
         """
         ce = Cache.query.filter_by(id=entry_id).first()
         if ce:
-            log.debug('Found ID ' + str(entry_id) + ' in cache')
+            log.debug(f'Found ID {entry_id} in cache')
             return ce
         return None
 
     @staticmethod
-    def add(entry_id, entry_name) -> Cache:
+    def add(entry_id: int, entry_name: str) -> Cache:
         """
         Add an entry to the cache.
 
-        :type entry_id: int
         :param entry_id: Entry identifier
-
-        :type entry_name: str
         :param entry_name: User-visible name of the entry
-
         :rtype: Cache object
         """
         ce = Cache(entry_id, entry_name)
-        log.debug('Adding ID ' + str(entry_id) + ' to cache')
+        log.debug(f'Adding ID {entry_id} to cache')
         db.session.add(ce)
         db.session.commit()
         return ce
@@ -110,8 +103,8 @@ class IdNameCache(CacheBase):
         ce = self.get_cached(char_id)
         if ce:
             return ce
-        api = swagger_client.CharacterApi()
-        log.debug('Querying ESI for character ID ' + str(char_id))
+        api = CharacterApi()
+        log.debug(f'Querying ESI for character {char_id}')
         rv = api.get_characters_character_id(char_id)
         return self.add(char_id, rv.name)
 
@@ -122,21 +115,19 @@ class IdNameCache(CacheBase):
         :type char_ids: Set[int]
         :param char_ids: Set of Character IDs used for lookup
         """
-        known_characters = set()
-        unknown_ids = list()
+        characters = set()
+        unknown = list()
         for char_id in char_ids:
             character = self.get_cached(char_id)
             if character:
-                known_characters.add(character)
+                characters.add(character)
             else:
-                unknown_ids.append(char_id)
-        if unknown_ids:
-            log.debug(f'Querying ESI for character IDs {unknown_ids}')
-            eve_characters: List[
-                GetCharactersNames200Ok] = swagger_client.CharacterApi().get_characters_names(unknown_ids)
-            for ec in eve_characters:
-                known_characters.add(self.add(ec.character_id, ec.character_name))
-        return known_characters
+                unknown.append(char_id)
+        if unknown:
+            log.debug(f'Querying ESI for characters {unknown}')
+            for c in CharacterApi().get_characters_names(unknown):
+                characters.add(self.add(c.character_id, c.character_name))
+        return characters
 
     @staticmethod
     def eve_type(type_id) -> EveType:
@@ -146,11 +137,11 @@ class IdNameCache(CacheBase):
         :type type_id: int
         :param type_id: EVE type ID used for lookup
         """
-        log.debug('Querying DB for EVE type ID ' + str(type_id))
+        log.debug(f'Querying DB for EVE type {type_id}')
         return EveType.query.filter_by(id=type_id).one()
 
 
-def get_mail_labels(api: swagger_client.MailApi,
+def get_mail_labels(api: MailApi,
                     character_id: int) -> GetCharactersCharacterIdMailLabelsOk:
     """
     Returns the mail labels and unread counts for a character.
@@ -162,20 +153,50 @@ def get_mail_labels(api: swagger_client.MailApi,
     return api.get_characters_character_id_mail_labels(character_id)
 
 
-def get_mail_list(api: swagger_client.MailApi, character_id: int, **kwargs) -> \
-        List[
-            GetCharactersCharacterIdMail200Ok]:
+def get_mails(api: MailApi, character_id: int, **kwargs) -> List[
+        GetCharactersCharacterIdMail200Ok]:
     """
     Returns the latest 50 email headers for a character.
 
     :param api: Mail API
     :param character_id: Character ID
     """
-    log.debug(f'get_mail_list {character_id}')
+    log.debug(f'get_mails {character_id}')
     return api.get_characters_character_id_mail(character_id, **kwargs)
 
 
-def get_character(api: swagger_client.CharacterApi,
+def get_mail_lists(api: MailApi, character_id: int) -> List[GetCharactersCharacterIdMailLists200Ok]:
+    """
+    Returns the mailing list subscriptions for a character.
+
+    :param api: Mail API
+    :param character_id: Character ID
+    """
+    log.debug(f'get_mail_lists {character_id}')
+    return api.get_characters_character_id_mail_lists(character_id)
+
+
+def put_mail(api: MailApi, character_id: int, mail_id: int, meta: PutCharactersCharacterIdMailMailIdContents, **kwargs):
+    """
+    Updates mail metadata.
+
+    :param api: Mail API
+    :param character_id: Character ID
+    :param mail_id: Mail ID
+    :param meta: Mail metadata.
+    """
+    log.debug(f'get_mails {character_id}')
+    api.put_characters_character_id_mail_mail_id(
+        character_id, meta, mail_id, **kwargs)
+
+
+def mark_mail_read(api: MailApi, character_id: int, mail_id: int, read=True):
+    meta = PutCharactersCharacterIdMailMailIdContents()
+    meta.read = read
+    put_mail(api, character_id, mail_id, meta)
+
+
+def get_character(api: CharacterApi,
                   character_id: int) -> GetCharactersCharacterIdOk:
     """
     Returns a character's public information.
