@@ -20,9 +20,9 @@ import swagger_client
 from bootini_star import esi
 from swagger_client.rest import ApiException
 from .email import RegistrationMail
-from .extensions import app_config, db, log, login_manager, pwd_context
+from .extensions import app_config, db, log, pwd_context
 from .forms import ChangePasswordForm, LoginForm, SelfDestructForm, SignupForm
-from .models import User, character_list_loader, user_loader
+from .models import User, character_list_loader, request_loader, user_loader
 from .sso import EveSso
 
 ACCOUNT_DELETE_FAILED = 'Unable to delete your account.'
@@ -90,6 +90,7 @@ class Signup(MethodView):
             'registered'], activation_token=token)
         db.session.add(user)
         db.session.commit()
+        log.info(f'User {user.uuid} signed up')
         headers = {'From': app_config['SMTP_SENDER_ADDRESS'], 'To': email}
         RegistrationMail().send(headers, url_for(
             '.activate', _external=True, email=email, token=token))
@@ -118,6 +119,7 @@ class ChangePassword(MethodView):
             try:
                 db.session.merge(current_user)
                 db.session.commit()
+                log.info(f'User {current_user.uuid} changed password')
                 flash(PASSWORD_CHANGED, 'success')
                 return redirect(url_for('.dashboard'))
             except SQLAlchemyError as e:
@@ -141,11 +143,13 @@ class SelfDestruct(MethodView):
             return render_template('selfdestruct.html', form=form)
         user = request_loader(request)
         if user:
+            uuid = user.uuid
             flask_login.logout_user()
             try:
                 user.delete_characters()
                 db.session.delete(user)
                 db.session.commit()
+                log.info(f'User {uuid} deleted account')
                 flash(ACCOUNT_DELETED, 'success')
                 return redirect(url_for('.index'))
             except SQLAlchemyError as e:
@@ -172,6 +176,7 @@ class Activate(MethodView):
             try:
                 db.session.merge(user)
                 db.session.commit()
+                log.info(f'User {user.uuid} activated account')
                 flash('Your account is now active, please login.', 'success')
                 return redirect(url_for('.login'))
             except SQLAlchemyError as e:
@@ -211,6 +216,7 @@ class Logout(MethodView):
 
     @flask_login.login_required
     def get(self):
+        log.info(f'User {current_user.uuid} logged out')
         flask_login.logout_user()
         flash(YOU_LOGGED_OUT, 'success')
         return redirect(url_for('.index'))
@@ -349,6 +355,8 @@ class RemoveCharacter(MethodView):
         if cc:
             db.session.delete(cc)
             db.session.commit()
+            log.info(
+                f'User {current_user.uuid} removed character {character_id}')
             flash('Character ' + cc.name + ' was removed.', 'success')
         else:
             flash('Please select one of your characters.', 'warning')
@@ -403,24 +411,3 @@ blueprint.add_url_rule('/maillist/<int:character_id>',
                        view_func=MailList.as_view('maillist'))
 blueprint.add_url_rule('/skillqueue/<int:character_id>',
                        view_func=Skills.as_view('skillqueue'))
-
-
-@login_manager.request_loader
-def request_loader(req):
-    email = req.form.get('email')
-    user = user_loader(email)
-    if user:
-        if user.may_login():
-            if req.form['password']:
-                if pwd_context.verify(req.form['password'], user.password):
-                    log.info(f'User {email} (level {user.level}) logged in')
-                    return user
-                else:
-                    log.warning(f'User {email} password mismatch')
-            else:
-                log.error('No password in request object')
-        else:
-            log.warning(f'User {email} (level {user.level}) may not login')
-    elif email:
-        log.warning(f'Unknown user {email}')
-    return None

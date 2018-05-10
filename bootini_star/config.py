@@ -11,9 +11,9 @@ import socket
 from bootini_star import version
 
 BAD = 'bad'
-
 DEFAULT_DEVELOPMENT_DB_URI = 'postgresql://postgres:@localhost/bs'
 DEFAULT_TESTING_DB_URI = DEFAULT_DEVELOPMENT_DB_URI + '_test'
+DEFAULT_ESI_CALLBACK_URI = 'http://127.0.0.1:5000/sso/callback'
 
 
 class Config:
@@ -32,8 +32,7 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', BAD)
     ESI_CLIENT_ID = os.getenv('ESI_CLIENT_ID', BAD)
     ESI_SECRET_KEY = os.getenv('ESI_SECRET_KEY', BAD)
-    ESI_CALLBACK_URI = os.getenv(
-        'ESI_CALLBACK_URI', 'http://127.0.0.1:5000/sso/callback')
+    ESI_CALLBACK_URI = os.getenv('ESI_CALLBACK_URI', DEFAULT_ESI_CALLBACK_URI)
     OAUTH_BASE = 'https://login.eveonline.com/oauth/'
     ESI_AUTHORIZATION_URI = OAUTH_BASE + 'authorize'
     ESI_TOKEN_URI = OAUTH_BASE + 'token'
@@ -42,7 +41,6 @@ class Config:
 
 
 class Development(Config):
-    """Enable debugging during development."""
     DEBUG = True
     TESTING = False
     # SQLALCHEMY_ECHO = True
@@ -51,17 +49,17 @@ class Development(Config):
 
 
 class Testing(Config):
-    """Testing requires SERVER_NAME for request indepentend URL generation."""
-    SERVER_NAME = os.getenv('SERVER_NAME', socket.getfqdn())
     DEBUG = True
     TESTING = True
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI',
                                         DEFAULT_TESTING_DB_URI)
+    """Testing requires SERVER_NAME for request independent URL generation."""
+    SERVER_NAME = os.getenv('SERVER_NAME', socket.getfqdn())
+    """Disable CSRF protection for WTForms during testing."""
     WTF_CSRF_ENABLED = False
 
 
 class Production(Config):
-    """Use environment variables to define your production settings."""
     DEBUG = False
     TESTING = False
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')

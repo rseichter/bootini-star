@@ -9,7 +9,7 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from passlib.context import CryptContext
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.WARNING, format='%(asctime)s %(message)s')
 log = logging.getLogger('bootini_star')
 
 app_config = {}

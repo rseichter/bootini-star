@@ -9,7 +9,7 @@ from flask.helpers import flash
 from flask.views import MethodView
 from flask_login import current_user
 
-from .extensions import db
+from .extensions import db, log
 from .models import Character
 from .sso import EveSso
 
@@ -38,6 +38,8 @@ class Callback(MethodView):
             character.set_token(auth_token)
             db.session.merge(character)
             db.session.commit()
+            log.info(
+                f'User {current_user.uuid} added character {character.id}')
             flash('Verification successful.', 'success')
             return redirect(url_for('bs.dashboard'))
         else:

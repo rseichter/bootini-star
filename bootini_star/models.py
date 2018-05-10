@@ -130,10 +130,30 @@ class User(db.Model, flask_login.UserMixin):
 @login_manager.user_loader
 def user_loader(email: str) -> Optional[User]:
     """Load user from DB, return None if not found."""
+    log.debug(f'user_loader {email}')
     try:
         return User.query.filter_by(email=email).first()
-    except SQLAlchemyError:
-        return None
+    except SQLAlchemyError as e:
+        log.error(f'Error loading user {email}: {e}')
+    return None
+
+
+@login_manager.request_loader
+def request_loader(req):
+    log.debug(f'request_loader {req}')
+    email = req.form.get('email')
+    user = user_loader(email)
+    if not user:
+        if email:
+            log.warning(f'Unknown user {email}')
+    elif not user.may_login():
+        log.warning(f'User {user.uuid} (level {user.level}) may not login')
+    elif not pwd_context.verify(req.form['password'], user.password):
+        log.warning(f'User {user.uuid} password mismatch')
+    else:
+        log.info(f'User {user.uuid} (level {user.level}) logged in')
+        return user
+    return None
 
 
 @event.listens_for(User, 'before_update')
