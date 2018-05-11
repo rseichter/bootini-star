@@ -12,9 +12,10 @@ import re
 from datetime import datetime
 
 from flask import Flask
-from flask_bootstrap import BOOTSTRAP_VERSION, Bootstrap, WebCDN
+from flask_bootstrap import Bootstrap
 from flask_migrate import Migrate
 
+from .account_views import add_account_url_rules
 from .extensions import app_config, db, log, login_manager
 from .resource_views import StaticFileConverter, blueprint as res_blueprint
 from .sso_views import blueprint as sso_blueprint
@@ -45,8 +46,9 @@ login_manager.blueprint_login_views = {
 }
 
 app.url_map.converters['static'] = StaticFileConverter
-app.register_blueprint(res_blueprint)
+add_account_url_rules(bs_blueprint)
 app.register_blueprint(bs_blueprint)
+app.register_blueprint(res_blueprint)
 app.register_blueprint(sso_blueprint)
 
 _re_flags = re.RegexFlag.MULTILINE

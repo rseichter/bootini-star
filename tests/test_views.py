@@ -12,10 +12,10 @@ import time
 from flask.helpers import url_for
 from sqlalchemy.exc import IntegrityError
 
-from bootini_star import app, forms, views
+from bootini_star import account_views, app, forms
+from bootini_star.account_views import InvalidUsageError
 from bootini_star.extensions import app_config, db
-from bootini_star.models import Character, UserLevel
-from bootini_star.views import InvalidUsageError, user_loader
+from bootini_star.models import Character, UserLevel, user_loader
 from .base import TestCase, TestUser, chribba_id, skipUnlessOnline
 from .base import character_id, character_name
 from .base import email, email2, email3, email4
@@ -159,7 +159,7 @@ class AllViews(TestCase):
     def test_bad_login_pw(self):
         add_user2()
         resp = self.login(email2, '!' + password2)
-        self.assertSubstr(views.LOGIN_FAILED, resp)
+        self.assertSubstr(account_views.LOGIN_FAILED, resp)
 
     def test_good_login(self):
         add_user2()
@@ -175,7 +175,7 @@ class AllViews(TestCase):
         add_user2()
         self.login(email2, password2)
         resp = self.logout()
-        self.assertSubstr(views.YOU_LOGGED_OUT, resp)
+        self.assertSubstr(account_views.YOU_LOGGED_OUT, resp)
 
     def test_signup_get(self):
         with app.app_context():
@@ -216,13 +216,13 @@ class AllViews(TestCase):
         add_user2()
         self.login(email2, password2)
         resp = self.pwchange(password2, password, password)
-        self.assertSubstr(views.PASSWORD_CHANGED, resp)
+        self.assertSubstr(account_views.PASSWORD_CHANGED, resp)
 
     def test_change_pw_wrong_current(self):
         add_user2()
         self.login(email2, password2)
         resp = self.pwchange(password3, password, password)
-        self.assertSubstr(views.PASSWORD_MISTYPED, resp)
+        self.assertSubstr(account_views.PASSWORD_MISTYPED, resp)
 
     def test_change_pw_missing_current(self):
         add_user2()
@@ -241,7 +241,7 @@ class AllViews(TestCase):
         add_user2()
         self.login(email2, password2)
         resp = self.selfdestruct(email2, password2)
-        self.assertSubstr(views.ACCOUNT_DELETED, resp)
+        self.assertSubstr(account_views.ACCOUNT_DELETED, resp)
 
     def test_selfdestruct_invalid_mail(self):
         add_user2()
@@ -254,7 +254,7 @@ class AllViews(TestCase):
         self.login(email2, password2)
         resp = self.selfdestruct(email2, 'bad')
         self.assertTrue(
-            views.ACCOUNT_DELETE_FAILED.encode('utf-8') in resp.data)
+            account_views.ACCOUNT_DELETE_FAILED.encode('utf-8') in resp.data)
 
     def test_load_unknown_user(self):
         with app.app_context():

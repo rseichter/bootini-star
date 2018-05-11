@@ -13,9 +13,6 @@
                     {% endif %}
                 </a> &middot;
             {% endfor %}
-            {% for sub in subscriptions %}
-                {{ sub.name }} &middot;
-            {% endfor %}
             <a href="{{ url_for('bs.maillist', character_id=character_id) }}">All</a>
             <table class="table table-striped">
                 <thead>

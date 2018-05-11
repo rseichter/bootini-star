@@ -6,7 +6,7 @@
             {% if characters %}
                 <p></p>
                 <table class="table table-hover table-striped">
-                    <caption>Your list of EVE characters</caption>
+                    <caption>Your EVE characters</caption>
                     <tbody>
                     {% for c in characters %}
                         <tr>
@@ -15,17 +15,13 @@
                             </td>
                             <td>
                                 <button type="button" class="btn btn-secondary"
-                                        onclick="location.href='{{ url_for('bs.maillabel', character_id=c.id, label=1) }}'">
-                                    Inbox
+                                        onclick="location.href='{{ url_for('bs.maillabel', character_id=c.id, label=1) }}'">Inbox
                                 </button>
                                 <button type="button" class="btn btn-secondary"
                                         onclick="location.href='{{ url_for('bs.maillist', character_id=c.id) }}'">Mail
-                                    list
                                 </button>
                                 <button type="button" class="btn btn-secondary"
-                                        onclick="location.href='{{ url_for('bs.skillqueue', character_id=c.id) }}'">
-                                    Skill
-                                    queue
+                                        onclick="location.href='{{ url_for('bs.skillqueue', character_id=c.id) }}'">Skill queue
                                 </button>
                                 <button type="button" class="btn btn-secondary showModal" data-toggle="modal"
                                         data-target="#bsModal" data-charname="{{ c.character_name }}"

@@ -79,56 +79,63 @@ class User(db.Model, flask_login.UserMixin):
 
     email = Column(String(256), primary_key=True, nullable=False)
     password = Column(String(90), nullable=False)
-    uuid = Column(String(40), nullable=False, unique=True)
+    __uuid = Column('uuid', String(40), nullable=False, unique=True)
     registered_at = Column(DateTime, nullable=False, server_default=UtcNow())
     modified_at = Column(DateTime, nullable=False, server_default=UtcNow())
-    _level = Column('level', SmallInteger, nullable=False)
+    __level = Column('level', SmallInteger, nullable=False)
     activation_token = Column(String(40))
     eve_characters = relationship('Character', backref='user', lazy=True)
 
     def __init__(self, email, password, uuid, activation_token=None):
         self.email = email
         self.password = pwd_context.hash(password)
-        self.uuid = uuid
+        self.__uuid = uuid
         if activation_token:
             self.activation_token = activation_token
-        self._current_character = None
+        self.__current_character = None
 
     def get_id(self):
         """Use email as ID (method required by Flask-Login)."""
         return self.email
 
+    @property
     def is_admin(self):
         return self.level >= UserLevel.ADMIN
 
+    @property
     def may_login(self):
         return self.level >= UserLevel.DEFAULT
 
     @property
+    def uuid(self):
+        return self.__uuid
+
+    @property
     def level(self):
-        return self._level
+        return self.__level
 
     @level.setter
-    def level(self, x):
-        if not isinstance(x, int):
-            x = int(x)
-        self._level = int(x)
+    def level(self, value):
+        if isinstance(value, enum.IntEnum):
+            self.__level = int(value)
+        else:
+            self.__level = value
 
     @property
     def current_character(self):
-        return self._current_character
+        return self.__current_character
 
     @current_character.setter
-    def current_character(self, x):
-        if not x or isinstance(x, Character):
-            self._current_character = x
+    def current_character(self, value):
+        if not value or isinstance(value, Character):
+            self.__current_character = value
         else:
-            raise TypeError("expected argument of type '" +
-                            Character.__name__ + "', found '" + x.__class__.__name__ + "'.")
+            raise TypeError(
+                "expected argument of type '" + Character.__name__ + "', found '" + value.__class__.__name__ + "'.")
 
     def load_character(self, character_id):
         self.current_character = character_loader(
-            character_id, owner=self.uuid)
+            character_id, owner=self.__uuid)
         return self.current_character
 
     def delete_characters(self):
@@ -136,7 +143,7 @@ class User(db.Model, flask_login.UserMixin):
         Delete all characters owned by this user. Note that this method
         does not commit the changes to DB.
         """
-        delete_characters_by_owner(self.uuid)
+        delete_characters_by_owner(self.__uuid)
 
 
 @login_manager.user_loader
@@ -158,7 +165,7 @@ def request_loader(req):
     if not user:
         if email:
             log.warning(f'Unknown user {email}')
-    elif not user.may_login():
+    elif not user.may_login:
         log.warning(f'User {user.uuid} (level {user.level}) may not login')
     elif not pwd_context.verify(req.form['password'], user.password):
         log.warning(f'User {user.uuid} password mismatch')
