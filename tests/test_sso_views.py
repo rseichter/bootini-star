@@ -1,6 +1,7 @@
 """
 Tests for EVE SSO views (login, callback).
 """
+from pprint import pprint
 
 __author__ = 'Ralph Seichter'
 
@@ -19,13 +20,11 @@ class SsoViews(TestCase):
         TestCase.setUp(self)
         self.app = app.test_client()
 
-    def login(self, email, password):
+    def login(self, eml, pw):
+        data = dict(email=eml, password=pw)
         with app.app_context():
-            return self.app.post(
-                url_for('bs.login'),
-                data=dict(email=email, password=password),
-                follow_redirects=True
-            )
+            url = url_for('bs.login')
+            return self.app.post(url, data=data, follow_redirects=True)
 
     def test_unauthorized_callback(self):
         with app.app_context():
@@ -33,12 +32,11 @@ class SsoViews(TestCase):
         self.assertEqual(resp.status_code, 302)
 
     def test_callback(self):
+        suffix = '?code=79ZuSjgpQQ34nVQUTqw1RpZMshfdK320q9Hdzh23UijlpLiMqjc-8ZRN7drWuFIF0'
         self.login(email, password)
         with app.app_context():
-            resp = self.app.get(url_for('sso.callback') +
-                                '?code=79ZuSjgpQQ34nVQUTqw1RpZMshfdK320q9Hdzh23UijlpLiMqjc-8ZRN7drWuFIF0',
-                                follow_redirects=True
-                                )
+            resp = self.app.get(url_for('sso.callback') + suffix, follow_redirects=True)
+        pprint(resp.data)
         self.assertTrue(b'Error obtaining authentication token' in resp.data)
 
 

@@ -16,8 +16,8 @@ from flask_login.utils import current_user
 import swagger_client
 from bootini_star import esi
 from swagger_client.rest import ApiException
-from .extensions import app_config, db, log
-from .models import character_list_loader
+from .extensions import app_config, log
+from .models import User
 from .sso import EveSso
 
 eveCache = esi.IdNameCache()
@@ -43,11 +43,11 @@ class Dashboard(MethodView):
 
     @flask_login.login_required
     def get(self):
-        characters = character_list_loader(flask_login.current_user.uuid)
         auth_url, auth_state = EveSso().auth_url_state()
+        cu: User = current_user
         return render_template(
             'dashboard.html',
-            characters=sorted(characters, key=attrgetter('name')),
+            characters=sorted(cu.characters, key=attrgetter('name')),
             auth_url=auth_url,
             auth_state=auth_state,
             config=app_config
@@ -73,8 +73,7 @@ def refresh_token(api, current_character):
     rt = es.refresh_token()
     if rt.token_changed:
         current_character.set_token(rt.token)
-        db.session.merge(current_character)
-        db.session.commit()
+        current_user.save()
     client = api.api_client
     client.set_default_header('User-Agent', app_config['USER_AGENT'])
     client.configuration.access_token = rt.token['access_token']
@@ -189,15 +188,18 @@ class RemoveCharacter(MethodView):
 
     @flask_login.login_required
     def get(self, character_id):
-        cc = current_user.load_character(character_id)
-        if cc:
-            db.session.delete(cc)
-            db.session.commit()
-            log.info(
-                f'User {current_user.uuid} removed character {character_id}')
-            flash('Character ' + cc.name + ' was removed.', 'success')
-        else:
-            flash('Please select one of your characters.', 'warning')
+        try:
+            log.debug(f'Remove character {character_id}')
+            count = User.objects(email=current_user.email).update_one(
+                pull__characters__id=character_id)
+            if count > 0:
+                flash(f'Character {character_id} was removed.', 'success')
+            else:
+                log.warning(f'Character {character_id} could not be removed')
+                flash(f'Character {character_id} could not be removed.', 'danger')
+        except Exception as e:
+            log.error(f'Error removing character: {e}')
+            flash(f'Character {character_id} could not be removed.', 'danger')
         return redirect(url_for('.dashboard'))
 
 

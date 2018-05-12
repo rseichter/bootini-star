@@ -5,14 +5,13 @@ Note that many of these tests are skipped unless started with the ONLINE_TESTS
 environment variable set to 1.
 """
 __author__ = 'Ralph Seichter'
-
 import unittest
 
-from sqlalchemy.orm.exc import NoResultFound
+from mongoengine import DoesNotExist
 
 import swagger_client
 from bootini_star import app
-from bootini_star.esi import IdNameCache, get_mails, get_mail_labels
+from bootini_star.esi import IdNameCache, get_mail_labels, get_mails
 from swagger_client.rest import ApiException
 from .base import TestCase, chribba_id, eulynn_id, skipUnlessOnline, user_agent
 
@@ -48,12 +47,12 @@ class ESI(TestCase):
             self.assertEqual(len(ids), len(cs))
             while cs:
                 c = cs.pop()
-                if c.id == chribba_id:
+                if c.eve_id == chribba_id:
                     self.assertEqual(c.name, 'Chribba')
-                elif c.id == eulynn_id:
+                elif c.eve_id == eulynn_id:
                     self.assertEqual(c.name, 'Eulynn')
                 else:
-                    self.fail(f'Unexpected ID {c.id}')
+                    self.fail(f'Unexpected ID {c.eve_id}')
 
     @skipUnlessOnline
     def test_eve_char_cached(self):
@@ -63,15 +62,12 @@ class ESI(TestCase):
             self.assertEqual(c1, c2)
 
     def test_eve_skill_known(self):
-        with app.app_context(), self.assertRaises(NoResultFound):
-            ''' Fails because the test DB is empty '''
-            self.inCache.eve_type(3436)
-            ''' If there was data, the following would work: '''
-            # x = self.inCache.eve_type(3436)
-            # self.assertEqual(x.name, 'Drones')
+        with app.app_context():
+            x = self.inCache.eve_type(3436)
+            self.assertEqual(x.name['en'], 'Drones')
 
     def test_eve_skill_unknown(self):
-        with app.app_context(), self.assertRaises(NoResultFound):
+        with app.app_context(), self.assertRaises(DoesNotExist):
             self.inCache.eve_type(-1)
 
     def test_get_mail_labels(self):

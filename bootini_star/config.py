@@ -11,7 +11,7 @@ import socket
 from bootini_star import version
 
 BAD = 'bad'
-DEFAULT_DEVELOPMENT_DB_URI = 'postgresql://postgres:@localhost/bs'
+DEFAULT_DEVELOPMENT_DB_URI = 'mongodb://127.0.0.1/bs'
 DEFAULT_TESTING_DB_URI = DEFAULT_DEVELOPMENT_DB_URI + '_test'
 DEFAULT_ESI_CALLBACK_URI = 'http://127.0.0.1:5000/sso/callback'
 
@@ -26,7 +26,6 @@ class Config:
     VERSION = version.__version__
     USER_AGENT = version.USER_AGENT
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'WARNING')
-    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
     SMTP_SERVER_URI = os.getenv('SMTP_SERVER_URI', '')
     SMTP_SENDER_ADDRESS = os.getenv('SMTP_SENDER_ADDRESS', '')
     SECRET_KEY = os.getenv('SECRET_KEY', BAD)
@@ -37,22 +36,18 @@ class Config:
     ESI_AUTHORIZATION_URI = OAUTH_BASE + 'authorize'
     ESI_TOKEN_URI = OAUTH_BASE + 'token'
     ESI_VERIFY_URI = OAUTH_BASE + 'verify'
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 class Development(Config):
     DEBUG = True
     TESTING = False
-    # SQLALCHEMY_ECHO = True
-    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI',
-                                        DEFAULT_DEVELOPMENT_DB_URI)
+    MONGODB_URI = os.getenv('MONGODB_URI', DEFAULT_DEVELOPMENT_DB_URI)
 
 
 class Testing(Config):
     DEBUG = True
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI',
-                                        DEFAULT_TESTING_DB_URI)
+    MONGODB_URI = os.getenv('MONGODB_URI', DEFAULT_TESTING_DB_URI)
     """Testing requires SERVER_NAME for request independent URL generation."""
     SERVER_NAME = os.getenv('SERVER_NAME', socket.getfqdn())
     """Disable CSRF protection for WTForms during testing."""
@@ -62,4 +57,4 @@ class Testing(Config):
 class Production(Config):
     DEBUG = False
     TESTING = False
-    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
+    MONGODB_URI = os.getenv('MONGODB_URI')

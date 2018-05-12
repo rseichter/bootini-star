@@ -19,7 +19,7 @@ class Development(unittest.TestCase):
         self.assertTrue(app.config['DEBUG'])
         self.assertNotEqual(app.config['SECRET_KEY'], BAD)
         self.assertEqual(
-            app.config['SQLALCHEMY_DATABASE_URI'], DEFAULT_DEVELOPMENT_DB_URI)
+            app.config['MONGODB_URI'], DEFAULT_DEVELOPMENT_DB_URI)
 
 
 class Testing(unittest.TestCase):
@@ -31,8 +31,7 @@ class Testing(unittest.TestCase):
         self.assertTrue(app.config['DEBUG'])
         self.assertTrue(app.config['TESTING'])
         self.assertNotEqual(app.config['SECRET_KEY'], BAD)
-        self.assertEqual(app.config['SQLALCHEMY_DATABASE_URI'],
-                         DEFAULT_TESTING_DB_URI)
+        self.assertEqual(app.config['MONGODB_URI'], DEFAULT_TESTING_DB_URI)
 
 
 class Production(unittest.TestCase):

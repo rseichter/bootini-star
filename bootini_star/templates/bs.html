@@ -51,9 +51,9 @@
     </div>
 {% endblock %}
 {% block content %}
-    {% if config and not config.SQLALCHEMY_DATABASE_URI %}
+    {% if config and not config.MONGODB_URI %}
         <div class="row justify-content-md-center">
-            <h3>&#9760; SQLALCHEMY_DATABASE_URI is not set.</h3>
+            <h3>&#9760; MONGODB_URI is not set.</h3>
         </div>
     {% else %}
         {% with messages = get_flashed_messages(with_categories=true) %}

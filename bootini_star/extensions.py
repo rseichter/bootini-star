@@ -5,17 +5,17 @@ __author__ = 'Ralph Seichter'
 
 import logging
 
-from flask_login import LoginManager
-from flask_sqlalchemy import SQLAlchemy
-from passlib.context import CryptContext
+import flask_login
+import flask_mongoengine
+import passlib.context
 
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s %(message)s')
 log = logging.getLogger('bootini_star')
 
 app_config = {}
 
-login_manager = LoginManager()
+login_manager = flask_login.LoginManager()
 
-db = SQLAlchemy()
+db = flask_mongoengine.MongoEngine()
 
-pwd_context = CryptContext(schemes=["pbkdf2_sha256"])
+pwd_context = passlib.context.CryptContext(schemes=["pbkdf2_sha256"])

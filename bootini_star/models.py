@@ -9,49 +9,10 @@ import json
 from typing import Optional
 
 import flask_login
-from sqlalchemy import BigInteger, Column, DateTime, event
-from sqlalchemy import ForeignKey, SmallInteger, String
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import expression
+import mongoengine
+from mongoengine import MongoEngineConnectionError
 
-from .extensions import db, log, login_manager, pwd_context
-
-
-class UtcNow(expression.FunctionElement):
-    """Used by SQLAlchemy."""
-    type = DateTime()
-
-
-# noinspection PyUnusedLocal
-@compiles(UtcNow, 'postgresql')
-def pg_utcnow(element, compiler, **kwargs):
-    """
-    Return statement representing 'UTC now' in PostgreSQL dialect.
-    Used by SQLAlchemy.
-    """
-    return "TIMEZONE('utc', CURRENT_TIMESTAMP)"
-
-
-# noinspection PyUnusedLocal
-@compiles(UtcNow, 'mssql')
-def mssql_utcnow(element, compiler, **kwargs):
-    """
-    Return statement representing 'UTC now' in Microsoft SQL Server dialect.
-    Used by SQLAlchemy.
-    """
-    return 'GETUTCDATE()'
-
-
-# noinspection PyUnusedLocal
-@compiles(UtcNow, 'mysql')
-def mysql_utcnow(element, compiler, **kwargs):
-    """
-    Return statement representing 'UTC now' in MySQL dialect.
-    Used by SQLAlchemy.
-    """
-    return 'CURRENT_TIMESTAMP()'
+from .extensions import log, login_manager, pwd_context
 
 
 @enum.unique
@@ -62,125 +23,7 @@ class UserLevel(enum.IntEnum):
     ADMIN = 100
 
 
-class User(db.Model, flask_login.UserMixin):
-    """
-    Model class representing an application user.
-
-    :type email: str
-    :param email: Email address
-
-    :type password: str
-    :param password: Cleartext password
-
-    :type uuid: str
-    :param uuid: Unique string
-    """
-    __tablename__ = "users"
-
-    email = Column(String(256), primary_key=True, nullable=False)
-    password = Column(String(90), nullable=False)
-    __uuid = Column('uuid', String(40), nullable=False, unique=True)
-    registered_at = Column(DateTime, nullable=False, server_default=UtcNow())
-    modified_at = Column(DateTime, nullable=False, server_default=UtcNow())
-    __level = Column('level', SmallInteger, nullable=False)
-    activation_token = Column(String(40))
-    eve_characters = relationship('Character', backref='user', lazy=True)
-
-    def __init__(self, email, password, uuid, activation_token=None):
-        self.email = email
-        self.password = pwd_context.hash(password)
-        self.__uuid = uuid
-        if activation_token:
-            self.activation_token = activation_token
-        self.__current_character = None
-
-    def get_id(self):
-        """Use email as ID (method required by Flask-Login)."""
-        return self.email
-
-    @property
-    def is_admin(self):
-        return self.level >= UserLevel.ADMIN
-
-    @property
-    def may_login(self):
-        return self.level >= UserLevel.DEFAULT
-
-    @property
-    def uuid(self):
-        return self.__uuid
-
-    @property
-    def level(self):
-        return self.__level
-
-    @level.setter
-    def level(self, value):
-        if isinstance(value, enum.IntEnum):
-            self.__level = int(value)
-        else:
-            self.__level = value
-
-    @property
-    def current_character(self):
-        return self.__current_character
-
-    @current_character.setter
-    def current_character(self, value):
-        if not value or isinstance(value, Character):
-            self.__current_character = value
-        else:
-            raise TypeError(
-                "expected argument of type '" + Character.__name__ + "', found '" + value.__class__.__name__ + "'.")
-
-    def load_character(self, character_id):
-        self.current_character = character_loader(
-            character_id, owner=self.__uuid)
-        return self.current_character
-
-    def delete_characters(self):
-        """
-        Delete all characters owned by this user. Note that this method
-        does not commit the changes to DB.
-        """
-        delete_characters_by_owner(self.__uuid)
-
-
-@login_manager.user_loader
-def user_loader(email: str) -> Optional[User]:
-    """Load user from DB, return None if not found."""
-    log.debug(f'user_loader {email}')
-    try:
-        return User.query.filter_by(email=email).first()
-    except SQLAlchemyError as e:
-        log.error(f'Error loading user {email}: {e}')
-    return None
-
-
-@login_manager.request_loader
-def request_loader(req):
-    log.debug(f'request_loader {req}')
-    email = req.form.get('email')
-    user = user_loader(email)
-    if not user:
-        if email:
-            log.warning(f'Unknown user {email}')
-    elif not user.may_login:
-        log.warning(f'User {user.uuid} (level {user.level}) may not login')
-    elif not pwd_context.verify(req.form['password'], user.password):
-        log.warning(f'User {user.uuid} password mismatch')
-    else:
-        log.info(f'User {user.uuid} (level {user.level}) logged in')
-        return user
-    return None
-
-
-@event.listens_for(User, 'before_update')
-def before_user_update(mapper, connection, target: User):
-    target.modified_at = datetime.datetime.utcnow()
-
-
-class Character(db.Model):
+class Character(mongoengine.EmbeddedDocument):
     """
     Model class representing an EVE Online player character. Each application
     user can own multiple player characters. Character names are unique, but
@@ -195,21 +38,16 @@ class Character(db.Model):
     :type name: str
     :param name: Character name.
     """
-    __tablename__ = "characters"
+    meta = {'collection': 'characters', 'allow_inheritance': True}
 
     # Each EVE character is owned by an application user.
-    owner = Column(String(40), ForeignKey('users.uuid'), nullable=False)
+    owner = mongoengine.StringField(required=True, max_length=40)
     # Use ESI character ID as primary key.
-    id = Column(BigInteger, primary_key=True, autoincrement=False)
-    name = Column(String(256), nullable=False, unique=True)
-    modified_at = Column(DateTime, nullable=False, server_default=UtcNow())
+    id = mongoengine.LongField(primary_key=True)
+    name = mongoengine.StringField(required=True, max_length=256)
+    modified_at = mongoengine.DateTimeField(default=datetime.datetime.utcnow)
     # SSO authentication token data
-    token_str = Column('token', String(500))
-
-    def __init__(self, owner, char_id, name):
-        self.owner = owner
-        self.id = char_id
-        self.name = name
+    token_str = mongoengine.StringField(max_length=500)
 
     def set_token(self, token_dict):
         """
@@ -225,33 +63,94 @@ class Character(db.Model):
         return json.loads(self.token_str)
 
 
-@event.listens_for(Character, 'before_update')
-def before_character_update(mapper, connection, target: Character):
-    target.modified_at = datetime.datetime.utcnow()
+class User(mongoengine.Document, flask_login.UserMixin):
+    """
+    Model class representing an application user.
 
+    :type email: str
+    :param email: Email address
 
-def character_loader(char_id: int, **kwargs) -> Optional[Character]:
-    """Load a Character object."""
-    try:
-        log.debug('Load character ID=' + str(char_id))
-        return Character.query.filter_by(id=char_id, **kwargs).first()
-    except SQLAlchemyError:
+    :type password: str
+    :param password: Cleartext password
+
+    :type uuid: str
+    :param uuid: Unique string
+    """
+    meta = {'collection': 'users', 'allow_inheritance': True}
+
+    email = mongoengine.EmailField(required=True, unique=True)
+    password = mongoengine.StringField(required=True, max_length=90)
+    uuid = mongoengine.StringField(required=True, unique=True, max_length=40)
+    level = mongoengine.IntField(required=True, min_value=-100, max_value=100)
+    registered_at = mongoengine.DateTimeField(default=datetime.datetime.utcnow)
+    modified_at = mongoengine.DateTimeField(default=datetime.datetime.utcnow)
+    activation_token = mongoengine.StringField(max_length=40)
+    characters = mongoengine.EmbeddedDocumentListField(Character)
+
+    def get_id(self):
+        """Use email as ID (method required by Flask-Login)."""
+        return self.email
+
+    @property
+    def is_admin(self):
+        return self.level >= UserLevel.ADMIN
+
+    @property
+    def current_character(self):
+        return self.__current_character
+
+    # @current_character.setter
+    # def current_character(self, value):
+    #     if not value or isinstance(value, Character):
+    #         self.__current_character = value
+    #     else:
+    #         raise TypeError(
+    #             "expected argument of type '" + Character.__name__ + "', found '" + value.__class__.__name__ + "'.")
+
+    def load_character(self, character_id):
+        for c in self.characters:
+            if c.id == character_id:
+                return c
         return None
 
 
-def character_list_loader(owner: str):
-    """
-    Load all Character objects for the given owner.
+@login_manager.user_loader
+def user_loader(email: str) -> Optional[User]:
+    """Load user from DB, return None if not found."""
+    log.debug(f'user_loader {email}')
+    try:
+        user = User.objects(email=email).first()
+        if user:
+            print(f'{user.email} is level {user.level}')
+        return user
+    except MongoEngineConnectionError as e:
+        log.error(f'Error loading user {email}: {e}')
+    return None
 
-    :param owner: Owner's UUID.
-    """
-    return Character.query.filter_by(owner=owner).all()
+
+@login_manager.request_loader
+def request_loader(request, min_level: UserLevel = UserLevel.DEFAULT):
+    log.debug(f'request_loader {request}')
+    email = request.form.get('email')
+    password = request.form.get('password')
+    if not (email and password):
+        return None
+    user = User.objects(email=email.strip(), level__gte=min_level).first()
+    if not user:
+        log.warning(f'No user {email} with level >= {min_level}')
+    elif not pwd_context.verify(password, user.password):
+        log.warning(f'User {email} password mismatch')
+    else:
+        log.info(f'User {email} (level {user.level}) logged in')
+        return user
+    return None
 
 
-def delete_characters_by_owner(owner: str):
-    """
-    Delete all Character objects for the given owner.
-
-    :param owner: Owner's UUID.
-    """
-    return Character.query.filter_by(owner=owner).delete()
+# @event.listens_for(User, 'before_update')
+# def before_user_update(mapper, connection, target: User):
+#     target.modified_at = datetime.datetime.utcnow()
+#
+#
+# @event.listens_for(Character, 'before_update')
+# def before_character_update(mapper, connection, target: Character):
+#     target.modified_at = datetime.datetime.utcnow()

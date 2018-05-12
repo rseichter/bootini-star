@@ -1,6 +1,8 @@
 """
 Basic unittest configuration, classes and functions.
 """
+from bootini_star.esi import Cache
+
 __author__ = 'Ralph Seichter'
 
 import ast
@@ -17,7 +19,7 @@ from flask.wrappers import Response
 
 from bootini_star import app, version
 from bootini_star.email import unittest_address
-from bootini_star.extensions import db
+from bootini_star.extensions import pwd_context
 from bootini_star.models import Character, User, UserLevel
 
 user_agent = version.USER_AGENT + ' Unittest'
@@ -49,10 +51,13 @@ skipUnlessOnline = unittest.skipUnless(ast.literal_eval(
 
 
 class TestUser(User):
+    def __init__(self, email, password, uuid, token=None, *args, **kwargs):
+        super().__init__(email=email, level=UserLevel.DEFAULT, password=pwd_context.hash(password), uuid=uuid, activation_token=token)
 
-    def __init__(self, email, password, uuid, token=None):
-        super().__init__(email, password, uuid, activation_token=token)
-        self.level = UserLevel.DEFAULT
+
+class TestCharacter(Character):
+    def __init__(self, owner, id, name, *args, **kwargs):
+        super().__init__(owner=owner, id=id, name=name)
 
 
 class TestCase(unittest.TestCase):
@@ -64,25 +69,30 @@ class TestCase(unittest.TestCase):
         warnings.filterwarnings(
             'ignore', message='The psycopg2 wheel package will be renamed ',
             category=UserWarning)
+        warnings.filterwarnings(
+            'ignore', message='update is deprecated.',
+            category=DeprecationWarning)
+        warnings.filterwarnings(
+            'ignore', message='save is deprecated.',
+            category=DeprecationWarning)
         app.config.from_object('bootini_star.config.Testing')
 
         with app.app_context():
-            db.create_all()
             user = TestUser(email, password, uuid)
-            db.session.add(user)
-            character = Character(uuid, character_id, character_name)
+            user.save()
+            character = TestCharacter(uuid, character_id, character_name)
             character.token_str = json.dumps({
                 'access_token': 'foo',
                 'expires_at': time.time() + 600,  # Expires in 10 minutes
                 'refresh_token': 'bar'
             })
-            db.session.add(character)
-            db.session.commit()
+            TestUser.objects(email=email).update_one(
+                push__characters=character)
 
     def tearDown(self):
         with app.app_context():
-            db.session.remove()
-            db.drop_all()
+            TestUser.drop_collection()
+            Cache.drop_collection()
 
     def assertRedirect(self, response, relative_url):
         if not (response and isinstance(response, Response)):

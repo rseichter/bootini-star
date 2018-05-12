@@ -12,7 +12,7 @@ from flask import flash, redirect, request, url_for
 from flask.templating import render_template
 from flask.views import MethodView
 from flask_login.utils import current_user
-from sqlalchemy.exc import SQLAlchemyError
+from mongoengine import MongoEngineConnectionError
 
 from bootini_star.views import flash_form_errors
 from .email import RegistrationMail
@@ -35,7 +35,7 @@ def is_safe_url(target):
     log.debug('ref netloc: ' + ref_url.netloc)
     log.debug('target netloc: ' + target_url.netloc)
     return (target_url.scheme in ('http', 'https')) \
-        and ref_url.netloc.casefold() == target_url.netloc.casefold()
+           and ref_url.netloc.casefold() == target_url.netloc.casefold()
 
 
 class InvalidUsageError(Exception):
@@ -70,15 +70,18 @@ class Signup(MethodView):
             return render_template('quickform.html', form=form)
         email = form.email.data.strip()
         password = form.password.data
-        token = str(uuid4())
-        user = User(email, password, str(uuid4()), activation_token=token)
+        user = User()
+        user.email = email
+        user.uuid = str(uuid4())
+        user.activation_token = str(uuid4())
+        user.password = pwd_context.hash(password)
         user.level = UserLevel.REGISTERED
-        db.session.add(user)
-        db.session.commit()
+        user.save()
         log.info(f'User {user.uuid} signed up')
         headers = {'From': app_config['SMTP_SENDER_ADDRESS'], 'To': email}
-        RegistrationMail().send(headers, url_for(
-            '.activate', _external=True, email=email, token=token))
+        RegistrationMail().send(headers, url_for('.activate', _external=True,
+                                                 email=email,
+                                                 token=user.activation_token))
         flash('Registration successful, an activation email has been sent.',
               'success')
         return redirect(url_for('.index'))
@@ -97,20 +100,23 @@ class ChangePassword(MethodView):
         if not form.validate_on_submit():
             flash_form_errors(form)
             return render_template('quickform.html', form=form)
-        current = form.current.data
-        password = form.password.data
-        if pwd_context.verify(current, current_user.password):
-            current_user.password = pwd_context.hash(password)
-            try:
-                db.session.merge(current_user)
-                db.session.commit()
-                log.info(f'User {current_user.uuid} changed password')
+        if not pwd_context.verify(form.current.data, current_user.password):
+            flash(PASSWORD_MISTYPED, 'warning')
+            return render_template('quickform.html', form=form)
+        email = current_user.email
+        try:
+            count = User.objects(email=email).update_one(
+                set__password=(pwd_context.hash(form.password.data)))
+            if count > 0:
+                log.info(f'User {email} changed password')
                 flash(PASSWORD_CHANGED, 'success')
-                return redirect(url_for('.dashboard'))
-            except SQLAlchemyError as e:
-                log.error(f'Error changing your password: {e}')
-        flash(PASSWORD_MISTYPED, 'warning')
-        return render_template('quickform.html', form=form)
+            else:
+                log.warning(f'Unable to change password for {email}')
+                flash(f'Unable to change password.', 'danger')
+        except MongoEngineConnectionError as e:
+            log.error(f'Error changing password: {e}')
+            flash(f'Unable to change password.', 'danger')
+        return redirect(url_for('.dashboard'))
 
 
 class SelfDestruct(MethodView):
@@ -126,19 +132,18 @@ class SelfDestruct(MethodView):
         if not form.validate_on_submit():
             flash_form_errors(form)
             return render_template('selfdestruct.html', form=form)
-        user = request_loader(request)
-        if user:
-            uuid = user.uuid
-            flask_login.logout_user()
-            try:
-                user.delete_characters()
-                db.session.delete(user)
-                db.session.commit()
-                log.info(f'User {uuid} deleted account')
+        email = current_user.email
+        flask_login.logout_user()
+        try:
+            count = User.objects(email=email).delete()
+            if count > 0:
+                log.info(f'User {email} deleted')
                 flash(ACCOUNT_DELETED, 'success')
                 return redirect(url_for('.index'))
-            except SQLAlchemyError as e:
-                log.error(f'Error deleting account: {e}')
+            else:
+                log.warning(f'User {email} could not be deleted')
+        except MongoEngineConnectionError as e:
+            log.error(f'Error deleting account: {e}')
         flash(ACCOUNT_DELETE_FAILED, 'danger')
         return redirect(url_for('.index'))
 
@@ -148,17 +153,16 @@ class Activate(MethodView):
 
     @staticmethod
     def get(email, token):
-        user = user_loader(email)
-        if user and user.activation_token == token:
+        user = User.objects(email=email, activation_token=token).first()
+        if user:
             user.activation_token = ''
             user.level = UserLevel.DEFAULT
             try:
-                db.session.merge(user)
-                db.session.commit()
+                user.save()
                 log.info(f'User {user.uuid} activated account')
                 flash('Your account is now active, please login.', 'success')
                 return redirect(url_for('.login'))
-            except SQLAlchemyError as e:
+            except MongoEngineConnectionError as e:
                 log.error(f'Account activation failed: {e}')
         flash('Account activation failed.', 'danger')
         return redirect(url_for('.index'))

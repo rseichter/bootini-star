@@ -14,19 +14,19 @@ from sqlalchemy.exc import IntegrityError
 
 from bootini_star import account_views, app, forms
 from bootini_star.account_views import InvalidUsageError
-from bootini_star.extensions import app_config, db
-from bootini_star.models import Character, UserLevel, user_loader
-from .base import TestCase, TestUser, chribba_id, skipUnlessOnline
+from bootini_star.extensions import app_config
+from bootini_star.models import UserLevel, user_loader
+from .base import TestCase, TestCharacter, TestUser
 from .base import character_id, character_name
+from .base import chribba_id, skipUnlessOnline
 from .base import email, email2, email3, email4
-from .base import password, password2, password3, password4, token4
+from .base import password, password2, password3, token4
 
 
 def add_user2():
     with app.app_context():
-        user = TestUser(email=email2, password=password2, uuid=str(uuid4()))
-        db.session.add(user)
-        db.session.commit()
+        user = TestUser(email2, password2, str(uuid4()))
+        user.save()
         return user
 
 
@@ -36,27 +36,23 @@ character_name3 = character_name + '3'
 
 def add_user3():
     with app.app_context():
-        user = TestUser(email=email3, password=password3, uuid=str(uuid4()))
-        db.session.add(user)
-        db.session.commit()
-        character = Character(user.uuid, character_id3, character_name3)
+        user = TestUser(email3, password3, str(uuid4()))
+        user.save()
+        character = TestCharacter(user.uuid, character_id3, character_name3)
         character.token_str = json.dumps({
             'access_token': 'foo',
             'expires_at': time.time() - 600,  # Expired 10 minutes ago
             'refresh_token': 'bar'
         })
-        db.session.add(character)
-        db.session.commit()
+        TestUser.objects(email=email3).update_one(push__characters=character)
         return user
 
 
 def add_user4():
     with app.app_context():
-        user = TestUser(email=email4, password=password4, uuid=str(uuid4()),
-                        token=token4)
+        user = TestUser(email4, 'dummy', str(uuid4()), token=token4)
         user.level = UserLevel.REGISTERED
-        db.session.add(user)
-        db.session.commit()
+        user.save()
         return user
 
 
@@ -93,6 +89,7 @@ class AllViews(TestCase):
                                  follow_redirects=True)
 
     def login(self, eml, pw, target=None):
+        #data = dict(email=eml, password=pwd_context.hash(pw))
         data = dict(email=eml, password=pw)
         with app.app_context():
             url = url_for('bs.login')

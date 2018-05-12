@@ -31,6 +31,7 @@ setup(
         'Flask-Bootstrap4 >= 4.0.2',
         'Flask-Login >= 0.4.1',
         'Flask-Migrate >= 2.1.1',
+        'flask-mongoengine >= 0.9.5',
         'Flask-SQLAlchemy >= 2.3.2',
         'Flask-WTF >= 0.14.2',
         'passlib >= 1.7.1',

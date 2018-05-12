@@ -3,11 +3,9 @@ Classes in this module are used to cache EVE Swagger Interface calls and static
 database entries like EVE item groups and types.
 """
 __author__ = 'Ralph Seichter'
-
 from typing import List, Optional, Set
 
-from sqlalchemy import BigInteger, Column, ForeignKey, String, Text
-from sqlalchemy.orm import relationship
+import mongoengine
 
 from swagger_client import CharacterApi, MailApi
 from swagger_client import GetCharactersCharacterIdMail200Ok
@@ -15,45 +13,40 @@ from swagger_client import GetCharactersCharacterIdMailLabelsOk
 from swagger_client import GetCharactersCharacterIdMailLists200Ok
 from swagger_client import GetCharactersCharacterIdOk
 from swagger_client import PutCharactersCharacterIdMailMailIdContents
-from .extensions import db, log
+from .extensions import log
 
 
-class EveGroup(db.Model):
+class EveGroup(mongoengine.Document):
     """
     EVE Online type groups.
 
     This is static data held in the database. Objects should only be read,
     not manually constructed.
     """
-    __tablename__ = "groups"
-    id = Column(BigInteger, primary_key=True, autoincrement=False)
-    name = Column(Text)
-    eve_types = relationship('EveType', backref='group', lazy=True)
+    meta = {'collection': 'eve_groups'}
+    eve_id = mongoengine.LongField(required=True, unique=True)
+    name = mongoengine.ListField()
 
 
-class EveType(db.Model):
+class EveType(mongoengine.Document):
     """
     EVE Online types. Each type belongs to a group.
 
     This is static data held in the database. Objects should only be read,
     not manually constructed.
     """
-    __tablename__ = "types"
-    id = Column(BigInteger, primary_key=True, autoincrement=False)
-    groupid = Column(BigInteger, ForeignKey('groups.id'), nullable=False)
-    name = Column(Text)
-    description = Column(Text)
+    meta = {'collection': 'eve_types'}
+    eve_id = mongoengine.LongField(required=True, unique=True)
+    groupID = mongoengine.LongField(required=True)
+    name = mongoengine.ListField()
+    description = mongoengine.ListField()
 
 
-class Cache(db.Model):
+class Cache(mongoengine.Document):
     """Cache ID-name pairs."""
-    __tablename__ = "cache"
-    id = Column(BigInteger, primary_key=True, autoincrement=False)
-    name = Column(String(256), nullable=False)
-
-    def __init__(self, entry_id, name):
-        self.id = entry_id
-        self.name = name
+    meta = {'collection': 'cache'}
+    eve_id = mongoengine.LongField(required=True, unique=True)
+    name = mongoengine.StringField(required=True, max_length=256)
 
 
 class CacheBase:
@@ -68,10 +61,10 @@ class CacheBase:
         :param entry_id: Entry ID to search
         :return: Entry if present, None otherwise.
         """
-        ce = Cache.query.filter_by(id=entry_id).first()
-        if ce:
+        entry = Cache.objects(eve_id=entry_id).first()
+        if entry:
             log.debug(f'Found ID {entry_id} in cache')
-            return ce
+            return entry
         return None
 
     @staticmethod
@@ -83,11 +76,13 @@ class CacheBase:
         :param entry_name: User-visible name of the entry
         :rtype: Cache object
         """
-        ce = Cache(entry_id, entry_name)
         log.debug(f'Adding ID {entry_id} to cache')
-        db.session.add(ce)
-        db.session.commit()
-        return ce
+        entry = Cache()
+        entry.eve_id = entry_id
+        entry.name = entry_name
+        log.info(f'Adding {entry_id} {entry_name}')
+        entry.save()
+        return entry
 
 
 class IdNameCache(CacheBase):
@@ -138,7 +133,7 @@ class IdNameCache(CacheBase):
         :param type_id: EVE type ID used for lookup
         """
         log.debug(f'Querying DB for EVE type {type_id}')
-        return EveType.query.filter_by(id=type_id).one()
+        return EveType.objects(eve_id=type_id).only('eve_id', 'name', 'description').get()
 
 
 def get_mail_labels(api: MailApi,
@@ -154,7 +149,7 @@ def get_mail_labels(api: MailApi,
 
 
 def get_mails(api: MailApi, character_id: int, **kwargs) -> List[
-        GetCharactersCharacterIdMail200Ok]:
+    GetCharactersCharacterIdMail200Ok]:
     """
     Returns the latest 50 email headers for a character.
 
@@ -165,7 +160,8 @@ def get_mails(api: MailApi, character_id: int, **kwargs) -> List[
     return api.get_characters_character_id_mail(character_id, **kwargs)
 
 
-def get_mail_lists(api: MailApi, character_id: int) -> List[GetCharactersCharacterIdMailLists200Ok]:
+def get_mail_lists(api: MailApi, character_id: int) -> List[
+    GetCharactersCharacterIdMailLists200Ok]:
     """
     Returns the mailing list subscriptions for a character.
 
@@ -176,7 +172,8 @@ def get_mail_lists(api: MailApi, character_id: int) -> List[GetCharactersCharact
     return api.get_characters_character_id_mail_lists(character_id)
 
 
-def put_mail(api: MailApi, character_id: int, mail_id: int, meta: PutCharactersCharacterIdMailMailIdContents, **kwargs):
+def put_mail(api: MailApi, character_id: int, mail_id: int,
+             meta: PutCharactersCharacterIdMailMailIdContents, **kwargs):
     """
     Updates mail metadata.
 

@@ -36,7 +36,7 @@ swagger_types = {
                     <tbody>
                     {% for qe in skillq %}
                         <tr>
-                            <td>{{ eveCache.eve_type(qe.skill_id).name }}</td>
+                            <td>{{ eveCache.eve_type(qe.skill_id).name['en'] }}</td>
                             <td>{{ qe.finished_level }}</td>
                             <td>{{ qe.finish_date if qe.finish_date else 'Paused' }}</td>
 {#
