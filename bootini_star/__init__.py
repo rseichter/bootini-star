@@ -58,6 +58,7 @@ _re_flags = re.RegexFlag.MULTILINE
 _div_pat = re.compile(r'<div>(.*?)</div>', flags=_re_flags)
 _font_pat = re.compile(r'<(font[^>]*|/font)>', flags=_re_flags)
 _span_pat = re.compile(r'<(span[^>]*|/span)>', flags=_re_flags)
+_datetime_pat = re.compile(r'(\d{4}\-\d{2}\-\d{2}).(\d{2}:\d{2})')
 _time_pat = re.compile(r'\+00:00')
 _si_pat = re.compile(r'href="showinfo:(\d+)//(\d+)"', flags=_re_flags)
 
@@ -96,11 +97,16 @@ def showinfo_filter(html: str, urlbase: str) -> str:
 
 
 @app.template_filter('eve_time')
-def time_filter(dt: datetime) -> str:
+def time_filter(dt) -> str:
     """
     Returns a string representation of a datetime object. Seconds, microseconds
     and TZ offset (EVE uses UTC anyway) are truncated.
 
     :param dt: Datetime object to convert to a string.
     """
-    return dt.strftime('%Y-%m-%d %H:%M')
+    if isinstance(dt, datetime):
+        return dt.strftime('%Y-%m-%d %H:%M')
+    m = _datetime_pat.search(dt)
+    if m:
+        return f'{m[1]} {m[2]}'
+    return dt

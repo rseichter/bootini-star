@@ -98,10 +98,7 @@ def load_user(email: str) -> Optional[User]:
     """
     log.debug(f'load_user {email}')
     try:
-        user = User.objects(email=email).first()
-        if user:
-            print(f'{user.email} is level {user.level}')
-        return user
+        return User.objects(email=email).first()
     except MongoEngineConnectionError as e:
         log.error(f'Error loading user {email}: {e}')
     return None

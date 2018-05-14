@@ -35,7 +35,7 @@ def is_safe_url(target):
     log.debug('ref netloc: ' + ref_url.netloc)
     log.debug('target netloc: ' + target_url.netloc)
     return (target_url.scheme in ('http', 'https')) \
-           and ref_url.netloc.casefold() == target_url.netloc.casefold()
+        and ref_url.netloc.casefold() == target_url.netloc.casefold()
 
 
 class InvalidUsageError(Exception):

@@ -1,0 +1,16 @@
+{% extends "bs.html" %}
+{% block bstitle %}Data dump{% endblock %} {% block bscontent %}
+    <div class="container-fluid mx-1">
+        <p>&nbsp;</p>
+        <table class="table table-striped">
+            <tbody>
+            <tr>
+                <td>{{ skill.name['en'] }}</td>
+            </tr>
+            <tr>
+                <td>{{ skill.description['en'] }}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

@@ -24,28 +24,15 @@ swagger_types = {
                             <th scope="col">Skill name</th>
                             <th scope="col">Level</th>
                             <th scope="col">Finishes at</th>
-{#
-                            <th scope="col">start_date</th>
-                            <th scope="col">queue_position</th>
-                            <th scope="col">training_start_sp</th>
-                            <th scope="col">level_end_sp</th>
-                            <th scope="col">level_start_sp</th>
-#}
                         </tr>
                     </thead>
                     <tbody>
                     {% for qe in skillq %}
                         <tr>
-                            <td>{{ eveCache.eve_type(qe.skill_id).name['en'] }}</td>
+                            <td><a href="{{ url_for('bs.skill', skill_id=qe.skill_id) }}">
+                                {{ eveCache.eve_type(qe.skill_id).name['en'] }}</a></td>
                             <td>{{ qe.finished_level }}</td>
                             <td>{{ qe.finish_date | eve_time if qe.finish_date else 'Paused' }}</td>
-{#
-                            <td>{{ qe.start_date }}</td>
-                            <td>{{ qe.queue_position }}</td>
-                            <td>{{ qe.training_start_sp }}</td>
-                            <td>{{ qe.level_end_sp }}</td>
-                            <td>{{ qe.level_start_sp }}</td>
-#}
                         </tr>
                     {% endfor %}
                     </tbody>

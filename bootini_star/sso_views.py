@@ -40,7 +40,7 @@ class Callback(MethodView):
             current_user.characters.append(character)
             save_user(current_user)
             log.info(
-                f'User {current_user.uuid} added character {character.id}')
+                f'User {current_user.email} added character {character.id}')
             flash('Verification successful.', 'success')
             return redirect(url_for('bs.dashboard'))
         else:

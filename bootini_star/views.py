@@ -229,6 +229,15 @@ class Skills(MethodView):
         return redirect(url_for('.dashboard'))
 
 
+class Skill(MethodView):
+    methods = ['GET']
+
+    @staticmethod
+    def get(skill_id):
+        skill = eveCache.eve_type(skill_id)
+        return render_template('skill.html', skill=skill)
+
+
 blueprint = Blueprint('bs', __name__)
 blueprint.add_url_rule(
     '/', view_func=RenderTemplate.as_view('index', template='index.html'))
@@ -247,5 +256,7 @@ blueprint.add_url_rule('/maillist/<int:character_id>/<int:label>',
                        view_func=MailList.as_view('maillabel'))
 blueprint.add_url_rule('/maillist/<int:character_id>',
                        view_func=MailList.as_view('maillist'))
+blueprint.add_url_rule('/skill/<int:skill_id>',
+                       view_func=Skill.as_view('skill'))
 blueprint.add_url_rule('/skillqueue/<int:character_id>',
                        view_func=Skills.as_view('skillqueue'))
