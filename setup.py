@@ -23,8 +23,8 @@ setup(
     data_files=[
         ('Bootini-Star', ['LICENSE', 'wsgi.py',
                           'db-static/db-helper.sh',
-                          'db-static/groups.sql.bz2',
-                          'db-static/types.sql.bz2']),
+                          'db-static/groups.json.bz2',
+                          'db-static/types.json.bz2']),
     ],
     install_requires=[
         'Flask >= 1.0.2',
