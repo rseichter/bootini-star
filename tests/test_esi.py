@@ -63,6 +63,7 @@ class ESI(TestCase):
             c2 = self.inCache.eve_character(chribba_id)
             self.assertEqual(c1, c2)
 
+    @skipUnlessOnline
     def test_eve_skill_known(self):
         with app.app_context():
             x = self.inCache.eve_type(3436)
