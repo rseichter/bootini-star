@@ -89,7 +89,7 @@ export SMTP_SENDER_ADDRESS='itsa-me-mario@example.com'
 export SMTP_SERVER_URI='tls://smtp.example.com/mario?DonkeyKong'
 ```
 
-The MongoDB database specified via MONGODB_URI is expected to exists. BS will
+The MongoDB database specified via MONGODB_URI is expected to exist. BS will
 however create the necessary collections. Use the following commands to import
 the required static EVE data:
 
