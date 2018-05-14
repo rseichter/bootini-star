@@ -24,6 +24,7 @@ with the development.
 1. Python 3.4 or later (3.6 is recommended).
 1. [pip](https://pypi.python.org/pypi/pip)
 1. [bash](https://www.gnu.org/software/bash/) or similar.
+1. [MongoDB](https://www.mongodb.com).
 
 ## Setting up a fresh environment
 
@@ -53,8 +54,6 @@ with [MySQL](https://www.mysql.com) as well.
 ```shell
 pip install -e .
 pip install -r requirements.txt
-# For developers
-pip install -r requirements-testing.txt
 which flask
 ```
 
@@ -83,12 +82,22 @@ export ESI_CLIENT_ID='Your client ID'
 export ESI_SECRET_KEY='Your secret key'
 
 # BS needs a database.
-export SQLALCHEMY_DATABASE_URI='postgresql://postgres:@localhost/bs'
+export MONGODB_URI='mongodb://127.0.0.1/bs'
 
 # Email settings for user registration.
 export SMTP_SENDER_ADDRESS='itsa-me-mario@example.com'
 export SMTP_SERVER_URI='tls://smtp.example.com/mario?DonkeyKong'
 ```
+
+The MongoDB database specified via MONGODB_URI is expected to exists. BS will
+however create the necessary collections. Use the following commands to import
+the required static EVE data:
+
+```shell
+cd db-static
+./db-helper.sh bs | /bin/sh
+```
+
 
 Make certain to specify a valid sender address or spam protection might kill off
 your registration emails. Your users will also want to be able to contact you if
@@ -113,36 +122,6 @@ You may specify a port number (e.g. smtp://localhost:4321) if the server listens
 on a non-standard port. The defaults are port 25 for unencrypted SMTP sessions
 and port 587 for SMTP with TLS, and BS smartly (cough) uses the proper values if
 you don't specify a port.
-
-
-Once the environment is configured to your satisfaction, create the database:
-
-```shell
-psql -U postgres -c 'create database bs;'
-# Developers need a test DB as well
-psql -U postgres -c 'create database bs_test;'
-```
-
-BS requires some static data, which you can load as follows, assuming you named
-your local database 'bs'.
-
-```shell
-cd db-static
-./db-helper bs load
-```
-
-You can pipe the output of the helper script into ```/bin/sh``` once you have
-verified that it suits your needs.
-
-Finally, let Flask create the remaining DB tables. If you are not using
-PostgreSQL, you will need to edit the migration scripts first.
-
-```shell
-# Adapt scripts if NOT using PostgreSQL
-flask db edit
-# Execute scripts
-flask db upgrade
-```
 
 ## Why is there no complete default configuration?
 

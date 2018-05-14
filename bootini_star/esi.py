@@ -149,7 +149,7 @@ def get_mail_labels(api: MailApi,
 
 
 def get_mails(api: MailApi, character_id: int, **kwargs) -> List[
-    GetCharactersCharacterIdMail200Ok]:
+        GetCharactersCharacterIdMail200Ok]:
     """
     Returns the latest 50 email headers for a character.
 
@@ -161,7 +161,7 @@ def get_mails(api: MailApi, character_id: int, **kwargs) -> List[
 
 
 def get_mail_lists(api: MailApi, character_id: int) -> List[
-    GetCharactersCharacterIdMailLists200Ok]:
+        GetCharactersCharacterIdMailLists200Ok]:
     """
     Returns the mailing list subscriptions for a character.
 

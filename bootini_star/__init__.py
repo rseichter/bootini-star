@@ -13,7 +13,6 @@ from datetime import datetime
 
 from flask import Flask
 from flask_bootstrap import Bootstrap
-from flask_migrate import Migrate
 
 from .account_views import add_account_url_rules
 from .extensions import app_config, db, log, login_manager
@@ -41,7 +40,6 @@ log.setLevel(level)
 
 Bootstrap(app)
 db.init_app(app)
-migrate = Migrate(app, db)
 
 login_manager.init_app(app)
 login_manager.login_message_category = 'info'

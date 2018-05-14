@@ -1,8 +1,6 @@
 """
 Tests for EVE SSO views (login, callback).
 """
-from pprint import pprint
-
 __author__ = 'Ralph Seichter'
 
 import unittest
@@ -20,12 +18,6 @@ class SsoViews(TestCase):
         TestCase.setUp(self)
         self.app = app.test_client()
 
-    def login(self, eml, pw):
-        data = dict(email=eml, password=pw)
-        with app.app_context():
-            url = url_for('bs.login')
-            return self.app.post(url, data=data, follow_redirects=True)
-
     def test_unauthorized_callback(self):
         with app.app_context():
             resp = self.app.get(url_for('sso.callback'))
@@ -35,8 +27,8 @@ class SsoViews(TestCase):
         suffix = '?code=79ZuSjgpQQ34nVQUTqw1RpZMshfdK320q9Hdzh23UijlpLiMqjc-8ZRN7drWuFIF0'
         self.login(email, password)
         with app.app_context():
-            resp = self.app.get(url_for('sso.callback') + suffix, follow_redirects=True)
-        pprint(resp.data)
+            resp = self.app.get(url_for('sso.callback') +
+                                suffix, follow_redirects=True)
         self.assertTrue(b'Error obtaining authentication token' in resp.data)
 
 

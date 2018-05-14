@@ -4,28 +4,25 @@ Tests for the application's views/routes.
 __author__ = 'Ralph Seichter'
 
 import json
-import unittest
-from uuid import uuid4
-
-import sqlalchemy
 import time
+import unittest
+
 from flask.helpers import url_for
-from sqlalchemy.exc import IntegrityError
 
 from bootini_star import account_views, app, forms
 from bootini_star.account_views import InvalidUsageError
 from bootini_star.extensions import app_config
-from bootini_star.models import UserLevel, user_loader
+from bootini_star.models import UserLevel, load_user
 from .base import TestCase, TestCharacter, TestUser
+from .base import activation_token, password, password2, password3
 from .base import character_id, character_name
 from .base import chribba_id, skipUnlessOnline
 from .base import email, email2, email3, email4
-from .base import password, password2, password3, token4
 
 
 def add_user2():
     with app.app_context():
-        user = TestUser(email2, password2, str(uuid4()))
+        user = TestUser(email2, password2)
         user.save()
         return user
 
@@ -36,9 +33,9 @@ character_name3 = character_name + '3'
 
 def add_user3():
     with app.app_context():
-        user = TestUser(email3, password3, str(uuid4()))
+        user = TestUser(email3, password3)
         user.save()
-        character = TestCharacter(user.uuid, character_id3, character_name3)
+        character = TestCharacter(character_id3, character_name3)
         character.token_str = json.dumps({
             'access_token': 'foo',
             'expires_at': time.time() - 600,  # Expired 10 minutes ago
@@ -50,7 +47,7 @@ def add_user3():
 
 def add_user4():
     with app.app_context():
-        user = TestUser(email4, 'dummy', str(uuid4()), token=token4)
+        user = TestUser(email4, 'dummy', token=activation_token)
         user.level = UserLevel.REGISTERED
         user.save()
         return user
@@ -87,19 +84,6 @@ class AllViews(TestCase):
         with app.app_context():
             return self.app.post(url_for('bs.selfdestruct'), data=data,
                                  follow_redirects=True)
-
-    def login(self, eml, pw, target=None):
-        #data = dict(email=eml, password=pwd_context.hash(pw))
-        data = dict(email=eml, password=pw)
-        with app.app_context():
-            url = url_for('bs.login')
-            if target:
-                url = url + '?next=' + target
-            return self.app.post(url, data=data, follow_redirects=True)
-
-    def logout(self):
-        with app.app_context():
-            return self.app.get(url_for('bs.logout'), follow_redirects=True)
 
     def test_index(self):
         with app.app_context():
@@ -255,7 +239,7 @@ class AllViews(TestCase):
 
     def test_load_unknown_user(self):
         with app.app_context():
-            self.assertIsNone(user_loader(email2))
+            self.assertIsNone(load_user(email2))
 
     def test_dashboard(self):
         add_user2()
@@ -405,7 +389,6 @@ class AllViews(TestCase):
 
     def test_activate_unknown_email(self):
         with app.app_context():
-            # log.info(resp)
             self.assertRedirect(
                 self.app.get(url_for('bs.activate', email='bad', token='x')),
                 url_for('bs.index')
@@ -416,7 +399,7 @@ class AllViews(TestCase):
         with app.app_context():
             self.assertRedirect(
                 self.app.get(
-                    url_for('bs.activate', email=email4, token=token4)),
+                    url_for('bs.activate', email=email4, token=activation_token)),
                 url_for('bs.login')
             )
 

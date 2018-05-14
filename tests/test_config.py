@@ -6,8 +6,9 @@ __author__ = 'Ralph Seichter'
 import unittest
 
 from bootini_star import app
-from bootini_star.config import BAD, DEFAULT_DEVELOPMENT_DB_URI, \
-    DEFAULT_TESTING_DB_URI
+from bootini_star.config import BAD
+from bootini_star.config import DEFAULT_DEVELOPMENT_DB_URI
+from bootini_star.config import DEFAULT_TESTING_DB_URI
 
 
 class Development(unittest.TestCase):

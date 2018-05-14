@@ -3,14 +3,11 @@ Tests for the application's model classes and SQLAlchemy.
 """
 __author__ = 'Ralph Seichter'
 
-import unittest
-
 from mongoengine.errors import NotUniqueError
 
 from bootini_star import app
 from .base import TestCase, TestCharacter, TestUser
-from .base import character_id, character_name
-from .base import email, uuid
+from .base import character_id, character_name, email
 
 
 class UserModel(TestCase):
@@ -27,35 +24,9 @@ class UserModel(TestCase):
 
     def test_duplicate_email(self):
         with app.app_context():
-            user = TestUser(email, 'dummy', 'dummy')
+            user = TestUser(email, 'dummy')
             with self.assertRaises(NotUniqueError):
                 user.save()
-
-    def test_duplicate_uuid(self):
-        with app.app_context():
-            user = TestUser('!' + email, 'dummy', uuid)
-            with self.assertRaises(NotUniqueError):
-                user.save()
-
-    @unittest.skip
-    def test_set_current_character(self):
-        with app.app_context():
-            user = TestUser.objects(email=email).first()
-            character = user.load_character(character_id)
-            self.assertIsNotNone(character)
-            user.current_character = None
-            with self.assertRaises(TypeError):
-                user.current_character = 123
-            user.current_character = character
-
-    @unittest.skip
-    def test_get_current_character(self):
-        with app.app_context():
-            user = TestUser.objects(email=email).first()
-            character = user.load_character(character_id)
-            self.assertIsNotNone(character)
-            user.current_character = character
-            self.assertEqual(character, user.current_character)
 
 
 class CharacterModel(TestCase):
@@ -68,9 +39,9 @@ class CharacterModel(TestCase):
 
     def test_add_char(self):
         with app.app_context():
-            c = TestCharacter('owner', 0, '!' + character_name)
-            count = TestUser.objects(email=email).update_one(
-                push__characters=c)
+            c = TestCharacter(0, '!' + character_name)
+            count = TestUser.objects(
+                email=email).update_one(push__characters=c)
             self.assertTrue(count == 1)
 
     def test_merge_auth_token(self):

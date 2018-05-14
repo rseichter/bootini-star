@@ -1,13 +1,8 @@
-mongoengine
 Flask >= 1.0.2
 Flask-Bootstrap4 >= 4.0.2
 Flask-Login >= 0.4.1
-Flask-Migrate >= 2.1.1
-Flask-SQLAlchemy >= 2.3.2
+flask-mongoengine >= 0.9.5
 Flask-WTF >= 0.14.2
 passlib >= 1.7.1
-psycopg2 >= 2.7.4
 requests-oauthlib >= 0.8.0
-SQLAlchemy >= 1.2.7
 Werkzeug >= 0.14.1
-WTForms >= 2.1

@@ -4,10 +4,12 @@ Tests for EVE Single-Sign-On.
 __author__ = 'Ralph Seichter'
 
 import unittest
+from uuid import uuid4
+
+from oauthlib.oauth2.rfc6749.errors import OAuth2Error
+
 from bootini_star.sso import EveSso
 from .base import TestCase
-from uuid import uuid4
-from oauthlib.oauth2.rfc6749.errors import OAuth2Error
 
 
 class Sso(TestCase):

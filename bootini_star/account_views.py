@@ -16,10 +16,10 @@ from mongoengine import MongoEngineConnectionError
 
 from bootini_star.views import flash_form_errors
 from .email import RegistrationMail
-from .extensions import app_config, db, log, pwd_context
+from .extensions import app_config, log, pwd_context
 from .forms import ChangePasswordForm, LoginForm, SelfDestructForm, SignupForm
-from .models import User, UserLevel
-from .models import request_loader, user_loader
+from .models import User, UserLevel, save_user
+from .models import request_loader
 
 ACCOUNT_DELETE_FAILED = 'Unable to delete your account.'
 ACCOUNT_DELETED = 'Your account has been deleted.'
@@ -70,18 +70,14 @@ class Signup(MethodView):
             return render_template('quickform.html', form=form)
         email = form.email.data.strip()
         password = form.password.data
-        user = User()
-        user.email = email
-        user.uuid = str(uuid4())
-        user.activation_token = str(uuid4())
-        user.password = pwd_context.hash(password)
-        user.level = UserLevel.REGISTERED
-        user.save()
-        log.info(f'User {user.uuid} signed up')
+        u = User(email=email, password=pwd_context.hash(password),
+                 activation_token=str(uuid4()), level=UserLevel.REGISTERED)
+        u.save()
+        log.info(f'User {email} signed up')
         headers = {'From': app_config['SMTP_SENDER_ADDRESS'], 'To': email}
         RegistrationMail().send(headers, url_for('.activate', _external=True,
                                                  email=email,
-                                                 token=user.activation_token))
+                                                 token=u.activation_token))
         flash('Registration successful, an activation email has been sent.',
               'success')
         return redirect(url_for('.index'))
@@ -155,11 +151,11 @@ class Activate(MethodView):
     def get(email, token):
         user = User.objects(email=email, activation_token=token).first()
         if user:
-            user.activation_token = ''
+            user.activation_token = None
             user.level = UserLevel.DEFAULT
             try:
-                user.save()
-                log.info(f'User {user.uuid} activated account')
+                save_user(user)
+                log.info(f'User {user.email} activated account')
                 flash('Your account is now active, please login.', 'success')
                 return redirect(url_for('.login'))
             except MongoEngineConnectionError as e:
@@ -199,7 +195,7 @@ class Logout(MethodView):
 
     @flask_login.login_required
     def get(self):
-        log.info(f'User {current_user.uuid} logged out')
+        log.info(f'User {current_user.email} logged out')
         flask_login.logout_user()
         flash(YOU_LOGGED_OUT, 'success')
         return redirect(url_for('.index'))

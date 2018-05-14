@@ -4,6 +4,7 @@ combined into a Flask blueprint.
 """
 __author__ = 'Ralph Seichter'
 
+import datetime
 import json
 from operator import attrgetter
 
@@ -17,7 +18,7 @@ import swagger_client
 from bootini_star import esi
 from swagger_client.rest import ApiException
 from .extensions import app_config, log
-from .models import User
+from .models import User, save_user
 from .sso import EveSso
 
 eveCache = esi.IdNameCache()
@@ -61,9 +62,10 @@ class Character(MethodView):
     def get(self, character_id):
         api = swagger_client.CharacterApi()
         try:
-            return render_template('character.html',
-                                   character=esi.get_character(api,
-                                                               character_id))
+            return render_template(
+                'character.html',
+                character=esi.get_character(api, character_id)
+            )
         except ApiException as e:
             return api_fail(e)
 
@@ -72,8 +74,10 @@ def refresh_token(api, current_character):
     es = EveSso(json.loads(current_character.token_str))
     rt = es.refresh_token()
     if rt.token_changed:
+        log.debug(f'Updating token for character {current_character.id}')
         current_character.set_token(rt.token)
-        current_user.save()
+        current_character.modified_at = datetime.datetime.utcnow()
+        save_user(current_user)
     client = api.api_client
     client.set_default_header('User-Agent', app_config['USER_AGENT'])
     client.configuration.access_token = rt.token['access_token']
@@ -196,7 +200,8 @@ class RemoveCharacter(MethodView):
                 flash(f'Character {character_id} was removed.', 'success')
             else:
                 log.warning(f'Character {character_id} could not be removed')
-                flash(f'Character {character_id} could not be removed.', 'danger')
+                flash(f'Character {character_id} could not be removed.',
+                      'danger')
         except Exception as e:
             log.error(f'Error removing character: {e}')
             flash(f'Character {character_id} could not be removed.', 'danger')

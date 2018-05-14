@@ -10,7 +10,7 @@ from flask.views import MethodView
 from flask_login import current_user
 
 from .extensions import log
-from .models import Character, User
+from .models import Character, save_user
 from .sso import EveSso
 
 
@@ -32,15 +32,13 @@ class Callback(MethodView):
         """
         resp = es.auth_verify()
         if resp.ok:
-            cu: User = current_user
             json = resp.json()
             character = Character()
-            character.owner = current_user.uuid
             character.id = json['CharacterID']
             character.name = json['CharacterName']
             character.set_token(auth_token)
-            cu.characters.append(character)
-            cu.save()
+            current_user.characters.append(character)
+            save_user(current_user)
             log.info(
                 f'User {current_user.uuid} added character {character.id}')
             flash('Verification successful.', 'success')

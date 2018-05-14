@@ -5,6 +5,7 @@ Note that many of these tests are skipped unless started with the ONLINE_TESTS
 environment variable set to 1.
 """
 __author__ = 'Ralph Seichter'
+
 import unittest
 
 from mongoengine import DoesNotExist
@@ -13,7 +14,8 @@ import swagger_client
 from bootini_star import app
 from bootini_star.esi import IdNameCache, get_mail_labels, get_mails
 from swagger_client.rest import ApiException
-from .base import TestCase, chribba_id, eulynn_id, skipUnlessOnline, user_agent
+from .base import TestCase, skipUnlessOnline, user_agent
+from .base import chribba_id, eulynn_id
 
 
 class ESI(TestCase):

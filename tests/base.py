@@ -1,44 +1,38 @@
 """
 Basic unittest configuration, classes and functions.
 """
-from bootini_star.esi import Cache
-
 __author__ = 'Ralph Seichter'
 
 import ast
 import json
 import os
 import re
+import time
 import unittest
 import warnings
 from unittest.util import safe_repr
 from uuid import uuid4
 
-import time
+from flask import url_for
 from flask.wrappers import Response
 
 from bootini_star import app, version
 from bootini_star.email import unittest_address
+from bootini_star.esi import Cache
 from bootini_star.extensions import pwd_context
-from bootini_star.models import Character, User, UserLevel
+from bootini_star.models import Character, User, UserLevel, save_user
 
 user_agent = version.USER_AGENT + ' Unittest'
+activation_token = str(uuid4())
 
 email = unittest_address('spam')
-password = 'secret1'
-uuid = str(uuid4())
-
 email2 = unittest_address('ham')
-password2 = 'secret2'
-uuid2 = str(uuid4())
-
 email3 = unittest_address('eggs')
-password3 = 'secret3'
-uuid3 = str(uuid4())
-
 email4 = unittest_address('monty')
+password = 'secret1'
+password2 = 'secret2'
+password3 = 'secret3'
 password4 = 'secret4'
-token4 = str(uuid4())
 
 character_id = 123
 character_name = 'Character ' + str(character_id)
@@ -51,13 +45,16 @@ skipUnlessOnline = unittest.skipUnless(ast.literal_eval(
 
 
 class TestUser(User):
-    def __init__(self, email, password, uuid, token=None, *args, **kwargs):
-        super().__init__(email=email, level=UserLevel.DEFAULT, password=pwd_context.hash(password), uuid=uuid, activation_token=token)
+    def __init__(self, email, password, token=None, *args, **kwargs):
+        super().__init__(email=email,
+                         password=pwd_context.hash(password),
+                         activation_token=token,
+                         level=UserLevel.DEFAULT)
 
 
 class TestCharacter(Character):
-    def __init__(self, owner, id, name, *args, **kwargs):
-        super().__init__(owner=owner, id=id, name=name)
+    def __init__(self, id, name, *args, **kwargs):
+        super().__init__(id=id, name=name)
 
 
 class TestCase(unittest.TestCase):
@@ -78,16 +75,15 @@ class TestCase(unittest.TestCase):
         app.config.from_object('bootini_star.config.Testing')
 
         with app.app_context():
-            user = TestUser(email, password, uuid)
-            user.save()
-            character = TestCharacter(uuid, character_id, character_name)
+            user = TestUser(email, password)
+            character = TestCharacter(character_id, character_name)
             character.token_str = json.dumps({
                 'access_token': 'foo',
                 'expires_at': time.time() + 600,  # Expires in 10 minutes
                 'refresh_token': 'bar'
             })
-            TestUser.objects(email=email).update_one(
-                push__characters=character)
+            user.characters.append(character)
+            save_user(user)
 
     def tearDown(self):
         with app.app_context():
@@ -106,6 +102,18 @@ class TestCase(unittest.TestCase):
             msg = self._formatMessage(f'{loc} does not start with {url}',
                                       'unexpected redirect target')
             raise self.failureException(msg)
+
+    def login(self, eml, pw, target=None):
+        with app.app_context():
+            url = url_for('bs.login')
+            if target:
+                url += '?next=' + target
+            data = dict(email=eml, password=pw)
+            return self.app.post(url, data=data, follow_redirects=True)
+
+    def logout(self):
+        with app.app_context():
+            return self.app.get(url_for('bs.logout'), follow_redirects=True)
 
 
 if __name__ == "__main__":
