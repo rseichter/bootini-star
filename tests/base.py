@@ -44,19 +44,6 @@ skipUnlessOnline = unittest.skipUnless(ast.literal_eval(
     os.getenv('ONLINE_TESTS', 'False')), 'ONLINE_TESTS=False')
 
 
-class TestUser(User):
-    def __init__(self, email, password, token=None, *args, **kwargs):
-        super().__init__(email=email,
-                         password=pwd_context.hash(password),
-                         activation_token=token,
-                         level=UserLevel.DEFAULT)
-
-
-class TestCharacter(Character):
-    def __init__(self, id, name, *args, **kwargs):
-        super().__init__(id=id, name=name)
-
-
 class TestCase(unittest.TestCase):
 
     def setUp(self):
@@ -72,11 +59,15 @@ class TestCase(unittest.TestCase):
         warnings.filterwarnings(
             'ignore', message='save is deprecated.',
             category=DeprecationWarning)
+        warnings.filterwarnings(
+            'ignore', message='remove is deprecated.',
+            category=DeprecationWarning)
         app.config.from_object('bootini_star.config.Testing')
-
+        self.app = app.test_client()
         with app.app_context():
-            user = TestUser(email, password)
-            character = TestCharacter(character_id, character_name)
+            user = User(email=email, password=pwd_context.hash(password),
+                        level=UserLevel.DEFAULT)
+            character = Character(id=character_id, name=character_name)
             character.token_str = json.dumps({
                 'access_token': 'foo',
                 'expires_at': time.time() + 600,  # Expires in 10 minutes
@@ -87,7 +78,7 @@ class TestCase(unittest.TestCase):
 
     def tearDown(self):
         with app.app_context():
-            TestUser.drop_collection()
+            User.drop_collection()
             Cache.drop_collection()
 
     def assertRedirect(self, response, relative_url):
@@ -103,17 +94,26 @@ class TestCase(unittest.TestCase):
                                       'unexpected redirect target')
             raise self.failureException(msg)
 
-    def login(self, eml, pw, target=None):
+    def login(self, email, password, target=None):
         with app.app_context():
             url = url_for('bs.login')
             if target:
                 url += '?next=' + target
-            data = dict(email=eml, password=pw)
+            data = dict(email=email, password=password)
             return self.app.post(url, data=data, follow_redirects=True)
 
     def logout(self):
         with app.app_context():
             return self.app.get(url_for('bs.logout'), follow_redirects=True)
+
+    @staticmethod
+    def new_user(password, save=True):
+        address = unittest_address(str(uuid4()))
+        user = User(email=address, password=pwd_context.hash(password),
+                    level=UserLevel.DEFAULT)
+        if save:
+            user.save()
+        return address
 
 
 if __name__ == "__main__":

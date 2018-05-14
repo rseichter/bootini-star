@@ -1,6 +1,8 @@
 #!/bin/sh
 
-COV='venv/bin/coverage'
+function _coverage {
+    APP_SETTINGS=bootini_star.config.Testing ONLINE_TESTS=1 LOG_LEVEL=error venv/bin/coverage $*
+}
 
-$COV run --branch --source bootini_star -m unittest
-$COV html -d tmp/coverage
+_coverage run --branch --source bootini_star -m unittest
+_coverage html -d tmp/coverage

@@ -26,8 +26,15 @@ class Helpers(unittest.TestCase):
         html = '<a href="showinfo:0//321">ham</a>'
         self.assertEqual(showinfo_filter(html, '/ham/'), html)
 
-    def test_time_filter(self):
+    def test_time_filter_dt(self):
         self.assertIsNotNone(time_filter(datetime.utcnow()))
+
+    def test_time_filter_str(self):
+        s = '2018-05-14T12:34:56'
+        self.assertEqual(time_filter(s), '2018-05-14 12:34')
+
+    def test_time_filter_ham(self):
+        self.assertEqual(time_filter('ham'), 'ham')
 
 
 if __name__ == "__main__":

@@ -8,12 +8,13 @@ import time
 import unittest
 
 from flask.helpers import url_for
+from mongoengine.errors import NotUniqueError
 
 from bootini_star import account_views, app, forms
 from bootini_star.account_views import InvalidUsageError
-from bootini_star.extensions import app_config
-from bootini_star.models import UserLevel, load_user
-from .base import TestCase, TestCharacter, TestUser
+from bootini_star.extensions import app_config, pwd_context
+from bootini_star.models import User, UserLevel, load_user
+from .base import TestCase, Character
 from .base import activation_token, password, password2, password3
 from .base import character_id, character_name
 from .base import chribba_id, skipUnlessOnline
@@ -22,7 +23,8 @@ from .base import email, email2, email3, email4
 
 def add_user2():
     with app.app_context():
-        user = TestUser(email2, password2)
+        user = User(email=email2, password=pwd_context.hash(
+            password2), level=UserLevel.DEFAULT)
         user.save()
         return user
 
@@ -33,31 +35,28 @@ character_name3 = character_name + '3'
 
 def add_user3():
     with app.app_context():
-        user = TestUser(email3, password3)
+        user = User(email=email3, password=pwd_context.hash(
+            password3), level=UserLevel.DEFAULT)
         user.save()
-        character = TestCharacter(character_id3, character_name3)
+        character = Character(character_id3, character_name3)
         character.token_str = json.dumps({
             'access_token': 'foo',
             'expires_at': time.time() - 600,  # Expired 10 minutes ago
             'refresh_token': 'bar'
         })
-        TestUser.objects(email=email3).update_one(push__characters=character)
+        User.objects(email=email3).update_one(push__characters=character)
         return user
 
 
 def add_user4():
     with app.app_context():
-        user = TestUser(email4, 'dummy', token=activation_token)
-        user.level = UserLevel.REGISTERED
+        user = User(email=email4, password=pwd_context.hash(
+            'dummy'), level=UserLevel.REGISTERED, activation_token=activation_token)
         user.save()
         return user
 
 
 class AllViews(TestCase):
-    def setUp(self):
-        TestCase.setUp(self)
-        self.app = app.test_client()
-
     def assertAppVersion(self, response):
         ver = app_config['VERSION']
         self.assertSubstr(f' version {ver}', response)
@@ -183,7 +182,7 @@ class AllViews(TestCase):
 
     def test_signup_existing(self):
         add_user2()
-        with self.assertRaises(sqlalchemy.exc.IntegrityError):
+        with self.assertRaises(NotUniqueError):
             self.signup(email2, password2, password2)
 
     def test_change_pw_get(self):

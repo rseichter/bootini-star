@@ -12,11 +12,6 @@ from .base import TestCase
 
 
 class ResourceViews(TestCase):
-
-    def setUp(self):
-        TestCase.setUp(self)
-        self.app = app.test_client()
-
     def image_url(self, filename):
         with app.app_context():
             self.assertRedirect(

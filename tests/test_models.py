@@ -6,7 +6,8 @@ __author__ = 'Ralph Seichter'
 from mongoengine.errors import NotUniqueError
 
 from bootini_star import app
-from .base import TestCase, TestCharacter, TestUser
+from bootini_star.models import User, UserLevel
+from .base import Character, TestCase
 from .base import character_id, character_name, email
 
 
@@ -14,17 +15,17 @@ class UserModel(TestCase):
 
     def test_get_existing_user(self):
         with app.app_context():
-            user = TestUser.objects(email=email).first()
+            user = User.objects(email=email).first()
             self.assertIsNotNone(user)
 
     def test_get_missing_user(self):
         with app.app_context():
-            user = TestUser.objects(email='!' + email).first()
+            user = User.objects(email='!' + email).first()
             self.assertIsNone(user)
 
     def test_duplicate_email(self):
         with app.app_context():
-            user = TestUser(email, 'dummy')
+            user = User(email, 'dummy',level=UserLevel.DEFAULT)
             with self.assertRaises(NotUniqueError):
                 user.save()
 
@@ -33,14 +34,14 @@ class CharacterModel(TestCase):
 
     def test_get_existing_char(self):
         with app.app_context():
-            c = TestUser.objects(email=email,
+            c = User.objects(email=email,
                                  characters__id=character_id).get()
             self.assertIsNotNone(c)
 
     def test_add_char(self):
         with app.app_context():
-            c = TestCharacter(0, '!' + character_name)
-            count = TestUser.objects(
+            c = Character(0, '!' + character_name)
+            count = User.objects(
                 email=email).update_one(push__characters=c)
             self.assertTrue(count == 1)
 
@@ -53,12 +54,12 @@ class CharacterModel(TestCase):
             'token_type': 'Bearer'
         }
         with app.app_context():
-            owner = TestUser.objects(characters__id=character_id).get()
+            owner = User.objects(characters__id=character_id).get()
             for c1 in owner.characters:
                 if c1.id == character_id:
                     c1.set_token(token)
                     owner.save()
-                    owner = TestUser.objects(characters__id=character_id).get()
+                    owner = User.objects(characters__id=character_id).get()
                     for c2 in owner.characters:
                         if c2.id == character_id:
                             td = c2.token_dict()
@@ -66,7 +67,6 @@ class CharacterModel(TestCase):
                     self.assertEqual(token['access_token'], td['access_token'])
                     self.assertEqual(token['expires_at'], td['expires_at'])
                     self.assertEqual(token['expires_in'], td['expires_in'])
-                    self.assertEqual(token['refresh_token'],
-                                     td['refresh_token'])
+                    self.assertEqual(token['refresh_token'], td['refresh_token'])
                     self.assertEqual(token['token_type'], td['token_type'])
                     break

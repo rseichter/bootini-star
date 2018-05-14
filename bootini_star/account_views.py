@@ -70,8 +70,9 @@ class Signup(MethodView):
             return render_template('quickform.html', form=form)
         email = form.email.data.strip()
         password = form.password.data
-        u = User(email=email, password=pwd_context.hash(password),
-                 activation_token=str(uuid4()), level=UserLevel.REGISTERED)
+        u = User(email=email, activation_token=str(uuid4()),
+                 level=UserLevel.REGISTERED)
+        u.hash_password(password)
         u.save()
         log.info(f'User {email} signed up')
         headers = {'From': app_config['SMTP_SENDER_ADDRESS'], 'To': email}
@@ -128,18 +129,20 @@ class SelfDestruct(MethodView):
         if not form.validate_on_submit():
             flash_form_errors(form)
             return render_template('selfdestruct.html', form=form)
-        email = current_user.email
-        flask_login.logout_user()
-        try:
-            count = User.objects(email=email).delete()
-            if count > 0:
-                log.info(f'User {email} deleted')
-                flash(ACCOUNT_DELETED, 'success')
-                return redirect(url_for('.index'))
-            else:
-                log.warning(f'User {email} could not be deleted')
-        except MongoEngineConnectionError as e:
-            log.error(f'Error deleting account: {e}')
+        user = request_loader(request)
+        if user:
+            email = user.email
+            flask_login.logout_user()
+            try:
+                count = User.objects(email=email).delete()
+                if count > 0:
+                    log.info(f'User {email} deleted')
+                    flash(ACCOUNT_DELETED, 'success')
+                    return redirect(url_for('.index'))
+                else:
+                    log.warning(f'User {email} could not be deleted')
+            except MongoEngineConnectionError as e:
+                log.error(f'Error deleting account: {e}')
         flash(ACCOUNT_DELETE_FAILED, 'danger')
         return redirect(url_for('.index'))
 

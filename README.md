@@ -21,7 +21,7 @@ with the development.
 
 1. An active EVE Online player account (Alpha or Omega).
 1. A registered application with [CCP Games](https://developers.eveonline.com).
-1. Python 3.4 or later (3.6 is recommended).
+1. Python 3.6 or later.
 1. [pip](https://pypi.python.org/pypi/pip)
 1. [bash](https://www.gnu.org/software/bash/) or similar.
 1. [MongoDB](https://www.mongodb.com).

@@ -21,7 +21,7 @@ from .base import chribba_id, eulynn_id
 class ESI(TestCase):
 
     def setUp(self):
-        TestCase.setUp(self)
+        super().setUp()
         self.inCache = IdNameCache()
 
     @skipUnlessOnline

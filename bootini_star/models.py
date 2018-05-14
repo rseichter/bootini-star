@@ -29,7 +29,7 @@ class Character(mongoengine.EmbeddedDocument):
     user can own multiple player characters. Character names are unique, but
     each character still has a technical ID.
     """
-    meta = {'collection': 'characters', 'allow_inheritance': True}
+    meta = {'collection': 'characters'}
 
     # Use ESI character ID as primary key.
     id = mongoengine.LongField(primary_key=True)
@@ -56,7 +56,7 @@ class User(mongoengine.Document, flask_login.UserMixin):
     """
     Model class representing an application user.
     """
-    meta = {'collection': 'users', 'allow_inheritance': True}
+    meta = {'collection': 'users'}
 
     email = mongoengine.EmailField(required=True, unique=True)
     password = mongoengine.StringField(required=True, max_length=90)
@@ -69,6 +69,9 @@ class User(mongoengine.Document, flask_login.UserMixin):
     def get_id(self):
         """Use email as ID (method required by Flask-Login)."""
         return self.email
+
+    def hash_password(self, clear_text_pw):
+        self.password = pwd_context.hash(clear_text_pw)
 
     @property
     def is_admin(self):
