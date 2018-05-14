@@ -2,8 +2,6 @@ language: python
 python:
   - "3.6"
 script:
-  - python -m unittest discover || echo 'Unittest have not yet been adapted to MongoDB'
+  - python -m unittest discover
 services:
-  - postgresql
-before_script:
-  - psql -U postgres -c 'CREATE DATABASE bs_test;'
+  - mongodb
