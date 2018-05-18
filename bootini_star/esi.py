@@ -5,8 +5,6 @@ database entries like EVE item groups and types.
 __author__ = 'Ralph Seichter'
 from typing import List, Optional, Set
 
-import mongoengine
-
 from swagger_client import CharacterApi, MailApi
 from swagger_client import GetCharactersCharacterIdMail200Ok
 from swagger_client import GetCharactersCharacterIdMailLabelsOk
@@ -14,39 +12,83 @@ from swagger_client import GetCharactersCharacterIdMailLists200Ok
 from swagger_client import GetCharactersCharacterIdOk
 from swagger_client import PutCharactersCharacterIdMailMailIdContents
 from .extensions import log
+from .models import MongoDocument, MongoField
 
 
-class EveGroup(mongoengine.Document):
+class Cache(MongoDocument):
+    def __init__(self):
+        MongoDocument.__init__(self, 'cache')
+        self.add_field(MongoField('eve_id', int, unique=True))
+        self.add_field(MongoField('name', str))
+
+    @property
+    def eve_id(self):
+        return self.get_field_value('eve_id')
+
+    @eve_id.setter
+    def eve_id(self, value):
+        self.set_field_value('eve_id', value)
+
+    @property
+    def name(self):
+        return self.get_field_value('name')
+
+    @name.setter
+    def name(self, value):
+        self.set_field_value('name', value)
+
+
+class EveGroup(Cache):
     """
     EVE Online type groups.
 
     This is static data held in the database. Objects should only be read,
     not manually constructed.
     """
-    meta = {'collection': 'eve_groups'}
-    eve_id = mongoengine.LongField(required=True, unique=True)
-    name = mongoengine.ListField()
+
+    def __init__(self):
+        MongoDocument.__init__(self, 'eve_groups')
+        self.add_field(MongoField('eve_id', int, unique=True))
+        self.add_field(MongoField('name', str))
 
 
-class EveType(mongoengine.Document):
+class EveType(MongoDocument):
     """
     EVE Online types. Each type belongs to a group.
 
     This is static data held in the database. Objects should only be read,
     not manually constructed.
     """
-    meta = {'collection': 'eve_types'}
-    eve_id = mongoengine.LongField(required=True, unique=True)
-    groupID = mongoengine.LongField(required=True)
-    name = mongoengine.ListField()
-    description = mongoengine.ListField()
 
+    def __init__(self):
+        MongoDocument.__init__(self, 'eve_types')
+        self.add_field(MongoField('eve_id', int, unique=True))
+        self.add_field(MongoField('name', dict))
+        self.add_field(MongoField('description', dict))
 
-class Cache(mongoengine.Document):
-    """Cache ID-name pairs."""
-    meta = {'collection': 'cache'}
-    eve_id = mongoengine.LongField(required=True, unique=True)
-    name = mongoengine.StringField(required=True, max_length=256)
+    @property
+    def eve_id(self):
+        return self.get_field_value('eve_id')
+
+    @eve_id.setter
+    def eve_id(self, value):
+        self.set_field_value('eve_id', value)
+
+    @property
+    def name(self) -> list:
+        return self.get_field_value('name')
+
+    @name.setter
+    def name(self, value: list):
+        self.set_field_value('name', value)
+
+    @property
+    def description(self) -> list:
+        return self.get_field_value('description')
+
+    @description.setter
+    def description(self, value: list):
+        self.set_field_value('description', value)
 
 
 class CacheBase:
@@ -61,10 +103,12 @@ class CacheBase:
         :param entry_id: Entry ID to search
         :return: Entry if present, None otherwise.
         """
-        entry = Cache.objects(eve_id=entry_id).first()
-        if entry:
+        cache = Cache()
+        data = cache.collection.find_one({'eve_id': entry_id})
+        if data:
             log.debug(f'Found ID {entry_id} in cache')
-            return entry
+            cache.from_mongo(data)
+            return cache
         return None
 
     @staticmethod
@@ -77,12 +121,12 @@ class CacheBase:
         :rtype: Cache object
         """
         log.debug(f'Adding ID {entry_id} to cache')
-        entry = Cache()
-        entry.eve_id = entry_id
-        entry.name = entry_name
+        cache = Cache()
+        cache.eve_id = entry_id
+        cache.name = entry_name
         log.info(f'Adding {entry_id} {entry_name}')
-        entry.save()
-        return entry
+        cache.insert()
+        return cache
 
 
 class IdNameCache(CacheBase):
@@ -133,7 +177,12 @@ class IdNameCache(CacheBase):
         :param type_id: EVE type ID used for lookup
         """
         log.debug(f'Querying DB for EVE type {type_id}')
-        return EveType.objects(eve_id=type_id).only('eve_id', 'name', 'description').get()
+        et = EveType()
+        data = et.collection.find_one({'eve_id': type_id})
+        if not data:
+            return None
+        et.from_mongo(data)
+        return et
 
 
 def get_mail_labels(api: MailApi,
@@ -149,7 +198,7 @@ def get_mail_labels(api: MailApi,
 
 
 def get_mails(api: MailApi, character_id: int, **kwargs) -> List[
-        GetCharactersCharacterIdMail200Ok]:
+    GetCharactersCharacterIdMail200Ok]:
     """
     Returns the latest 50 email headers for a character.
 
@@ -161,7 +210,7 @@ def get_mails(api: MailApi, character_id: int, **kwargs) -> List[
 
 
 def get_mail_lists(api: MailApi, character_id: int) -> List[
-        GetCharactersCharacterIdMailLists200Ok]:
+    GetCharactersCharacterIdMailLists200Ok]:
     """
     Returns the mailing list subscriptions for a character.
 

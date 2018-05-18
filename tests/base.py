@@ -19,8 +19,7 @@ from flask.wrappers import Response
 from bootini_star import app, version
 from bootini_star.email import unittest_address
 from bootini_star.esi import Cache
-from bootini_star.extensions import pwd_context
-from bootini_star.models import Character, User, UserLevel, save_user
+from bootini_star.models import Character, User, UserLevel
 
 user_agent = version.USER_AGENT + ' Unittest'
 activation_token = str(uuid4())
@@ -65,21 +64,26 @@ class TestCase(unittest.TestCase):
         app.config.from_object('bootini_star.config.Testing')
         self.app = app.test_client()
         with app.app_context():
-            user = User(email=email, password=pwd_context.hash(password),
-                        level=UserLevel.DEFAULT)
-            character = Character(id=character_id, name=character_name)
-            character.token_str = json.dumps({
+            user = User(ensure_indexes=True)
+            user.email = email
+            user.password = password
+            user.level = UserLevel.DEFAULT
+
+            character = Character()
+            character.eve_id = character_id
+            character.name = character_name
+            character.token = {
                 'access_token': 'foo',
                 'expires_at': time.time() + 600,  # Expires in 10 minutes
                 'refresh_token': 'bar'
-            })
-            user.characters.append(character)
-            save_user(user)
+            }
+
+            user.characters = [character]
+            self.assertIsNotNone(user.insert())
 
     def tearDown(self):
-        with app.app_context():
-            User.drop_collection()
-            Cache.drop_collection()
+        Cache().collection.delete_many({})
+        User().collection.delete_many({})
 
     def assertRedirect(self, response, relative_url):
         if not (response and isinstance(response, Response)):
@@ -109,10 +113,12 @@ class TestCase(unittest.TestCase):
     @staticmethod
     def new_user(password, save=True):
         address = unittest_address(str(uuid4()))
-        user = User(email=address, password=pwd_context.hash(password),
-                    level=UserLevel.DEFAULT)
+        user = User()
+        user.email = address
+        user.password = password
+        user.level = UserLevel.DEFAULT
         if save:
-            user.save()
+            user.insert()
         return address
 
 

@@ -11,21 +11,21 @@
                     {% for c in characters %}
                         <tr>
                             <td>
-                                <a href="{{ url_for('bs.character', character_id=c.id) }}">{{ c.name }}</a>
+                                <a href="{{ url_for('bs.character', character_id=c.eve_id) }}">{{ c.name }}</a>
                             </td>
                             <td>
                                 <button type="button" class="btn btn-secondary"
-                                        onclick="location.href='{{ url_for('bs.maillabel', character_id=c.id, label=1) }}'">Inbox
+                                        onclick="location.href='{{ url_for('bs.maillabel', character_id=c.eve_id, label=1) }}'">Inbox
                                 </button>
                                 <button type="button" class="btn btn-secondary"
-                                        onclick="location.href='{{ url_for('bs.maillist', character_id=c.id) }}'">Mail
+                                        onclick="location.href='{{ url_for('bs.maillist', character_id=c.eve_id) }}'">Mail
                                 </button>
                                 <button type="button" class="btn btn-secondary"
-                                        onclick="location.href='{{ url_for('bs.skillqueue', character_id=c.id) }}'">Skill queue
+                                        onclick="location.href='{{ url_for('bs.skillqueue', character_id=c.eve_id) }}'">Skill queue
                                 </button>
                                 <button type="button" class="btn btn-secondary showModal" data-toggle="modal"
                                         data-target="#bsModal" data-charname="{{ c.character_name }}"
-                                        data-character_id="{{ c.id }}">&times;
+                                        data-character_id="{{ c.eve_id }}">&times;
                                 </button>
                             </td>
                         </tr>

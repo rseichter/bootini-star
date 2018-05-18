@@ -7,52 +7,61 @@ import json
 import time
 import unittest
 
+import pymongo
 from flask.helpers import url_for
-from mongoengine.errors import NotUniqueError
 
 from bootini_star import account_views, app, forms
-from bootini_star.account_views import InvalidUsageError
-from bootini_star.extensions import app_config, pwd_context
+from bootini_star.account_views import InvalidUsageError, SIGNUP_FAILED
+from bootini_star.extensions import app_config
 from bootini_star.models import User, UserLevel, load_user
-from .base import TestCase, Character
+from .base import Character, TestCase
 from .base import activation_token, password, password2, password3
 from .base import character_id, character_name
 from .base import chribba_id, skipUnlessOnline
 from .base import email, email2, email3, email4
 
-
-def add_user2():
-    with app.app_context():
-        user = User(email=email2, password=pwd_context.hash(
-            password2), level=UserLevel.DEFAULT)
-        user.save()
-        return user
-
-
 character_id3 = character_id + 3
 character_name3 = character_name + '3'
 
 
+def add_user2():
+    with app.app_context():
+        user = User()
+        user.email = email2
+        user.password = password2
+        user.level = UserLevel.DEFAULT
+        user.insert()
+        return user
+
+
 def add_user3():
     with app.app_context():
-        user = User(email=email3, password=pwd_context.hash(
-            password3), level=UserLevel.DEFAULT)
-        user.save()
-        character = Character(character_id3, character_name3)
-        character.token_str = json.dumps({
+        user = User()
+        user.email = email3
+        user.password = password3
+        user.level = UserLevel.DEFAULT
+
+        character = Character()
+        character.eve_id = character_id3
+        character.name = character_name3
+        character.token = json.dumps({
             'access_token': 'foo',
             'expires_at': time.time() - 600,  # Expired 10 minutes ago
             'refresh_token': 'bar'
         })
-        User.objects(email=email3).update_one(push__characters=character)
+        user.characters = [character]
+        user.insert()
         return user
 
 
 def add_user4():
     with app.app_context():
-        user = User(email=email4, password=pwd_context.hash(
-            'dummy'), level=UserLevel.REGISTERED, activation_token=activation_token)
-        user.save()
+        user = User()
+        user.email = email4
+        user.password = 'dummy'
+        user.activation_token = activation_token
+        user.level = UserLevel.REGISTERED
+        user.insert()
         return user
 
 
@@ -182,8 +191,9 @@ class AllViews(TestCase):
 
     def test_signup_existing(self):
         add_user2()
-        with self.assertRaises(NotUniqueError):
-            self.signup(email2, password2, password2)
+        with app.app_context():
+            resp = self.signup(email2, password2, password2)
+            self.assertSubstr(SIGNUP_FAILED, resp)
 
     def test_change_pw_get(self):
         add_user2()
@@ -290,9 +300,8 @@ class AllViews(TestCase):
         self.login(email, password)
         with app.app_context():
             self.assertRedirect(
-                self.app.get(
-                    url_for('bs.mail', character_id=character_id,
-                            mail_id=123)),
+                self.app.get(url_for('bs.mail', character_id=character_id,
+                                     mail_id=123)),
                 url_for('bs.index')
             )
 
@@ -398,7 +407,8 @@ class AllViews(TestCase):
         with app.app_context():
             self.assertRedirect(
                 self.app.get(
-                    url_for('bs.activate', email=email4, token=activation_token)),
+                    url_for('bs.activate', email=email4,
+                            token=activation_token)),
                 url_for('bs.login')
             )
 

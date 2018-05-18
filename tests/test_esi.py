@@ -8,11 +8,12 @@ __author__ = 'Ralph Seichter'
 
 import unittest
 
-from mongoengine import DoesNotExist
-
 import swagger_client
 from bootini_star import app
-from bootini_star.esi import IdNameCache, get_mail_labels, get_mails
+from bootini_star.esi import IdNameCache, get_mail_labels, get_mails, EveType, \
+    EveGroup
+from uuid import uuid4
+
 from swagger_client.rest import ApiException
 from .base import TestCase, skipUnlessOnline, user_agent
 from .base import chribba_id, eulynn_id
@@ -61,7 +62,7 @@ class ESI(TestCase):
         with app.app_context():
             c1 = self.inCache.eve_character(chribba_id)
             c2 = self.inCache.eve_character(chribba_id)
-            self.assertEqual(c1, c2)
+            self.assertEqual(c1.name, c2.name)
 
     @skipUnlessOnline
     def test_eve_skill_known(self):
@@ -70,7 +71,7 @@ class ESI(TestCase):
             self.assertEqual(x.name['en'], 'Drones')
 
     def test_eve_skill_unknown(self):
-        with app.app_context(), self.assertRaises(DoesNotExist):
+        with app.app_context():
             self.inCache.eve_type(-1)
 
     def test_get_mail_labels(self):
@@ -93,6 +94,27 @@ class ESI(TestCase):
         resp = api.get_characters_character_id(
             eulynn_id, user_agent=user_agent, async=False)
         self.assertEqual(resp.name, 'Eulynn')
+
+    def test_eve_group(self):
+        eg = EveGroup()
+        x = 101
+        eg.eve_id = x
+        self.assertEqual(eg.eve_id, x)
+        x = str(uuid4())
+        eg.name = x
+        self.assertEqual(eg.name, x)
+
+    def test_eve_type(self):
+        et = EveType()
+        x = 404
+        et.eve_id = x
+        self.assertEqual(et.eve_id, x)
+        x = str(uuid4())
+        y = str(uuid4())
+        et.name = {x: y}
+        self.assertEqual(et.name[x], y)
+        et.description = {y: x}
+        self.assertEqual(et.description[y], x)
 
 
 if __name__ == "__main__":

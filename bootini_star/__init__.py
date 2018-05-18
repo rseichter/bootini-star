@@ -24,11 +24,6 @@ app = Flask(__name__)
 # Development configuration settings are the default.
 app_settings = os.getenv('APP_SETTINGS', 'bootini_star.config.Development')
 app.config.from_object(app_settings)
-app.config['MONGODB_SETTINGS'] = {
-    'db': 'bs',
-    'host': app.config['MONGODB_URI'],
-    'connect': True
-}
 app_config.update(app.config)
 
 # Set logging level
@@ -39,7 +34,6 @@ if not isinstance(level, int):
 log.setLevel(level)
 
 Bootstrap(app)
-db.init_app(app)
 
 login_manager.init_app(app)
 login_manager.login_message_category = 'info'

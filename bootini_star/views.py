@@ -18,7 +18,7 @@ import swagger_client
 from bootini_star import esi
 from swagger_client.rest import ApiException
 from .extensions import app_config, log
-from .models import User, save_user
+from .models import User
 from .sso import EveSso
 
 eveCache = esi.IdNameCache()
@@ -46,9 +46,11 @@ class Dashboard(MethodView):
     def get(self):
         auth_url, auth_state = EveSso().auth_url_state()
         cu: User = current_user
+        characters = sorted(cu.characters,
+                            key=attrgetter('name')) if cu.characters else None
         return render_template(
             'dashboard.html',
-            characters=sorted(cu.characters, key=attrgetter('name')),
+            characters=characters,
             auth_url=auth_url,
             auth_state=auth_state,
             config=app_config
@@ -70,14 +72,16 @@ class Character(MethodView):
             return api_fail(e)
 
 
-def refresh_token(api, current_character):
-    es = EveSso(json.loads(current_character.token_str))
+def refresh_token(api, character: Character):
+    es = EveSso(character.token)
     rt = es.refresh_token()
     if rt.token_changed:
-        log.debug(f'Updating token for character {current_character.id}')
-        current_character.set_token(rt.token)
-        current_character.modified_at = datetime.datetime.utcnow()
-        save_user(current_user)
+        log.debug(f'Updating token for character {character.eve_id}')
+        character.activation_token(rt.token)
+        character.modified_at = datetime.datetime.utcnow()
+        if current_user.update() != 1:
+            log.error(
+                f'Error updating token for character {character.eve_id}')
     client = api.api_client
     client.set_default_header('User-Agent', app_config['USER_AGENT'])
     client.configuration.access_token = rt.token['access_token']
@@ -194,9 +198,8 @@ class RemoveCharacter(MethodView):
     def get(self, character_id):
         try:
             log.debug(f'Remove character {character_id}')
-            count = User.objects(email=current_user.email).update_one(
-                pull__characters__id=character_id)
-            if count > 0:
+            current_user.remove_character(character_id)
+            if current_user.update() == 1:
                 flash(f'Character {character_id} was removed.', 'success')
             else:
                 log.warning(f'Character {character_id} could not be removed')

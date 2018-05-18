@@ -1,72 +1,78 @@
 """
-Tests for the application's model classes and SQLAlchemy.
+Tests for the MongoDB support classes and functions.
 """
 __author__ = 'Ralph Seichter'
 
-from mongoengine.errors import NotUniqueError
+import unittest
 
-from bootini_star import app
-from bootini_star.models import User, UserLevel
-from .base import Character, TestCase
-from .base import character_id, character_name, email
+import pymongo
 
+from bootini_star.extensions import pwd_context
+from bootini_star.models import Character, User, load_user
 
-class UserModel(TestCase):
-
-    def test_get_existing_user(self):
-        with app.app_context():
-            user = User.objects(email=email).first()
-            self.assertIsNotNone(user)
-
-    def test_get_missing_user(self):
-        with app.app_context():
-            user = User.objects(email='!' + email).first()
-            self.assertIsNone(user)
-
-    def test_duplicate_email(self):
-        with app.app_context():
-            user = User(email, 'dummy',level=UserLevel.DEFAULT)
-            with self.assertRaises(NotUniqueError):
-                user.save()
+EMAIL = 'tim@buster.net'
+EMAIL2 = 'fred@flint.org'
+PASSWORD = 'so secret'
+PASSWORD2 = 'guess what'
 
 
-class CharacterModel(TestCase):
+class MongoDocumentTests(unittest.TestCase):
+    def setUp(self):
+        u = User(ensure_indexes=True)
+        u.email = EMAIL
+        u.password = PASSWORD
+        mongo_id = u.insert()
+        self.assertIsNotNone(mongo_id)
 
-    def test_get_existing_char(self):
-        with app.app_context():
-            c = User.objects(email=email,
-                                 characters__id=character_id).get()
-            self.assertIsNotNone(c)
+    def tearDown(self):
+        User().collection.delete_many({})
 
-    def test_add_char(self):
-        with app.app_context():
-            c = Character(0, '!' + character_name)
-            count = User.objects(
-                email=email).update_one(push__characters=c)
-            self.assertTrue(count == 1)
+    def test_read_existing_user(self):
+        data = User().collection.find_one({'email': EMAIL})
+        self.assertIsNotNone(data)
+        self.assertTrue(pwd_context.verify(PASSWORD, data['password']))
 
-    def test_merge_auth_token(self):
-        token = {
-            'access_token': 'access',
-            'expires_at': 1524411513.324366,
-            'expires_in': 123,
-            'refresh_token': 'refresh',
-            'token_type': 'Bearer'
-        }
-        with app.app_context():
-            owner = User.objects(characters__id=character_id).get()
-            for c1 in owner.characters:
-                if c1.id == character_id:
-                    c1.set_token(token)
-                    owner.save()
-                    owner = User.objects(characters__id=character_id).get()
-                    for c2 in owner.characters:
-                        if c2.id == character_id:
-                            td = c2.token_dict()
-                            break
-                    self.assertEqual(token['access_token'], td['access_token'])
-                    self.assertEqual(token['expires_at'], td['expires_at'])
-                    self.assertEqual(token['expires_in'], td['expires_in'])
-                    self.assertEqual(token['refresh_token'], td['refresh_token'])
-                    self.assertEqual(token['token_type'], td['token_type'])
-                    break
+    def test_insert_duplicate_user(self):
+        u = User()
+        u.email = EMAIL
+        u.password = 'not' + PASSWORD
+        with self.assertRaises(pymongo.errors.DuplicateKeyError):
+            u.insert()
+
+    def test_insert_valid_user(self):
+        u = User()
+        u.email = EMAIL2
+        u.password = PASSWORD2
+        self.assertIsNotNone(u.insert())
+
+    def test_insert_character(self):
+        c = Character()
+        c.eve_id = 1
+        c.token = 'token #1'
+        with self.assertRaises(NotImplementedError):
+            c.insert()
+
+    def test_insert_user_with_character(self):
+        u = User()
+        u.email = EMAIL2
+        u.password = PASSWORD2
+        u.level = 321
+        u.activation_token = 'a-token for user 2'
+
+        c1 = Character()
+        c1.eve_id = 1
+        c1.token = 'token #1'
+
+        c2 = Character()
+        c2.eve_id = 2
+        c2.token = 'token #2'
+
+        u.characters = [c1, c2]
+        self.assertIsNotNone(u.insert())
+
+        u2 = load_user(EMAIL2)
+        self.assertTrue(isinstance(u2, User))
+
+
+if __name__ == '__main__':
+    unittest.main()
