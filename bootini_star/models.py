@@ -88,9 +88,7 @@ class MongoDocument:
     def from_mongo(self, data: dict):
         for name, field in self._field_dict.items():
             if name in data:
-                if field.type == dict:
-                    field.value = data[name]
-                elif field.type == list:
+                if field.type == list:
                     field.value = list_from_mongo(data[name])
                 else:
                     field.value = data[name]
