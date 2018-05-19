@@ -12,6 +12,7 @@ from flask import Blueprint, flash, redirect, url_for
 from flask.templating import render_template
 from flask.views import MethodView, View
 from flask_login.utils import current_user
+from pymongo.errors import OperationFailure
 
 import swagger_client
 from bootini_star import esi
@@ -207,7 +208,7 @@ class RemoveCharacter(MethodView):
                 log.warning(f'Character {character_id} could not be removed')
                 flash(f'Character {character_id} could not be removed.',
                       'danger')
-        except Exception as e:
+        except OperationFailure as e:
             log.error(f'Error removing character: {e}')
             flash(f'Character {character_id} could not be removed.', 'danger')
         return redirect(url_for('.dashboard'))

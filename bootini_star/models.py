@@ -15,6 +15,7 @@ from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 from .extensions import app_config, log, login_manager, pwd_context
 
 db = None
+LAST_MODIFIED = 'last_modified'
 
 
 @enum.unique
@@ -118,12 +119,17 @@ class MongoDocument:
     def insert(self) -> str:
         data = self.to_mongo()
         r: InsertOneResult = self.collection.insert_one(data)
+        if r.inserted_id:
+            _filter = {'_id': r.inserted_id}
+            _update = {'$currentDate': {LAST_MODIFIED: True}}
+            self.collection.update_one(_filter, _update)
         return r.inserted_id
 
     def update(self) -> int:
         data = self.to_mongo()
-        filter = {'_id': self.get_field_value('_id')}
-        r: UpdateResult = self.collection.update_one(filter, {"$set": data})
+        _filter = {'_id': self.get_field_value('_id')}
+        _update = {'$set': data, '$currentDate': {LAST_MODIFIED: True}}
+        r: UpdateResult = self.collection.update_one(_filter, _update)
         return r.modified_count
 
 
@@ -242,7 +248,8 @@ def activate_user(email: str, token: str) -> User:
     r: UpdateResult = User().collection.update_one(
         {'email': email, 'activation_token': token},
         {'$set': {'level': UserLevel.DEFAULT},
-         '$unset': {'activation_token': None}})
+         '$unset': {'activation_token': None},
+         '$currentDate': {LAST_MODIFIED: True}})
     return r.modified_count
 
 
