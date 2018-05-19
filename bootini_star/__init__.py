@@ -15,7 +15,7 @@ from flask import Flask
 from flask_bootstrap import Bootstrap
 
 from .account_views import add_account_url_rules
-from .extensions import app_config, db, log, login_manager
+from .extensions import app_config, log, login_manager
 from .resource_views import StaticFileConverter, blueprint as res_blueprint
 from .sso_views import blueprint as sso_blueprint
 from .views import blueprint as bs_blueprint

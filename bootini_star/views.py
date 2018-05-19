@@ -5,7 +5,6 @@ combined into a Flask blueprint.
 __author__ = 'Ralph Seichter'
 
 import datetime
-import json
 from operator import attrgetter
 
 import flask_login
@@ -16,11 +15,14 @@ from flask_login.utils import current_user
 
 import swagger_client
 from bootini_star import esi
+from bootini_star.esi import Cache, EveGroup, EveType
+from bootini_star.forms import AdminForm
 from swagger_client.rest import ApiException
 from .extensions import app_config, log
-from .models import User
+from .models import User, create_unique_index
 from .sso import EveSso
 
+ADMIN_REQUIRED = 'Admin privileges are required.'
 eveCache = esi.IdNameCache()
 
 
@@ -241,9 +243,33 @@ class Skill(MethodView):
         return render_template('skill.html', skill=skill)
 
 
+class Admin(MethodView):
+    methods = ['GET', 'POST']
+
+    @flask_login.fresh_login_required
+    def get(self):
+        if current_user.is_admin:
+            return render_template('quickform.html', form=AdminForm())
+        flash(ADMIN_REQUIRED, 'warning')
+        return redirect(url_for('.login'))
+
+    @flask_login.fresh_login_required
+    def post(self):
+        if current_user.is_admin:
+            create_unique_index(Cache().collection, 'eve_id')
+            create_unique_index(EveGroup().collection, 'eve_id')
+            create_unique_index(EveType().collection, 'eve_id')
+            create_unique_index(User().collection, 'email')
+            flash('Created database indexes.', 'success')
+            return redirect(url_for('.dashboard'))
+        flash(ADMIN_REQUIRED, 'warning')
+        return redirect(url_for('.login'))
+
+
 blueprint = Blueprint('bs', __name__)
 blueprint.add_url_rule(
     '/', view_func=RenderTemplate.as_view('index', template='index.html'))
+blueprint.add_url_rule('/admin', view_func=Admin.as_view('admin'))
 blueprint.add_url_rule('/dashboard', view_func=Dashboard.as_view('dashboard'))
 blueprint.add_url_rule('/dashboard/rm/<int:character_id>',
                        view_func=RemoveCharacter.as_view('rmcharacter'))

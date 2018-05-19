@@ -9,6 +9,7 @@ from wtforms.validators import DataRequired, Email, EqualTo
 
 CPW_LABEL = 'Confirm password'
 CPW_MSG = 'Password confirmation is required.'
+CREATE_INDEXES = 'Create MongoDB indexes'
 CURRENT_LABEL = 'Current password'
 CURRENT_MSG = 'Current password is required.'
 EMAIL_LABEL = 'Email address'
@@ -48,3 +49,7 @@ class SignupForm(FlaskForm):
 class SelfDestructForm(FlaskForm):
     email = StringField(EMAIL_LABEL, validators=[Email(message=EMAIL_MSG)])
     password = PasswordField(PW_LABEL, validators=[DataRequired(PW_MSG)])
+
+
+class AdminForm(FlaskForm):
+    submit = SubmitField(CREATE_INDEXES)

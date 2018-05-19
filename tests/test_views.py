@@ -7,12 +7,12 @@ import json
 import time
 import unittest
 
-import pymongo
 from flask.helpers import url_for
 
 from bootini_star import account_views, app, forms
 from bootini_star.account_views import InvalidUsageError, SIGNUP_FAILED
 from bootini_star.extensions import app_config
+from bootini_star.forms import CREATE_INDEXES
 from bootini_star.models import User, UserLevel, load_user
 from .base import Character, TestCase
 from .base import activation_token, password, password2, password3
@@ -39,7 +39,7 @@ def add_user3():
         user = User()
         user.email = email3
         user.password = password3
-        user.level = UserLevel.DEFAULT
+        user.level = UserLevel.ADMIN
 
         character = Character()
         character.eve_id = character_id3
@@ -418,6 +418,19 @@ class AllViews(TestCase):
         except InvalidUsageError as e:
             self.assertEqual(e.message, password)
             self.assertEqual(e.status_code, 432)
+
+    def test_admin_valid(self):
+        add_user3()
+        self.login(email3, password3)
+        with app.app_context():
+            resp = self.app.get(url_for('bs.admin'))
+            self.assertSubstr(CREATE_INDEXES, resp)
+
+    def test_admin_unauthorised(self):
+        self.login(email, password)
+        with app.app_context():
+            self.assertRedirect(self.app.get(url_for('bs.admin')),
+                                url_for('bs.login'))
 
 
 if __name__ == "__main__":

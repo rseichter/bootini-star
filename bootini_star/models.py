@@ -8,7 +8,8 @@ import re
 
 import flask_login
 import pymongo
-from pymongo.results import InsertOneResult, UpdateResult, DeleteResult
+from pymongo.collection import Collection
+from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
 from .extensions import app_config, log, login_manager, pwd_context
 
@@ -29,6 +30,14 @@ def init_mongodb():
     match = re.search(r'/(\w+)$', db_uri)
     db_client = pymongo.MongoClient(db_uri)
     db = db_client.get_database(match[1])
+
+
+def create_unique_index(collection: Collection, field_name: str):
+    index_name = field_name + '_u'
+    index_info = collection.index_information()
+    if index_name not in index_info:
+        collection.create_index([(field_name, pymongo.ASCENDING)],
+                                name=index_name, unique=True, background=True)
 
 
 def list_from_mongo(data: dict) -> list:
@@ -94,20 +103,16 @@ class MongoDocument:
                     field.value = data[name]
 
     @property
-    def collection(self) -> pymongo.collection.Collection:
+    def collection(self) -> Collection:
         global db
         if not db:
             init_mongodb()
         return db[self._collection]
 
     def ensure_indexes(self):
-        index_info = self.collection.index_information()
         for name, field in self._field_dict.items():
             if field.unique:
-                index_name = name + '_u'
-                if index_name not in index_info:
-                    self.collection.create_index([(name, pymongo.ASCENDING)],
-                                                 name=index_name, unique=True)
+                create_unique_index(self.collection, name)
 
     def insert(self) -> str:
         data = self.to_mongo()

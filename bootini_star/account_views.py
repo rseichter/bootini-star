@@ -94,11 +94,11 @@ class Signup(MethodView):
 class ChangePassword(MethodView):
     methods = ['GET', 'POST']
 
-    @flask_login.login_required
+    @flask_login.fresh_login_required
     def get(self):
         return render_template('quickform.html', form=ChangePasswordForm())
 
-    @flask_login.login_required
+    @flask_login.fresh_login_required
     def post(self):
         form = ChangePasswordForm()
         if not form.validate_on_submit():
@@ -125,11 +125,11 @@ class ChangePassword(MethodView):
 class SelfDestruct(MethodView):
     methods = ['GET', 'POST']
 
-    @flask_login.login_required
+    @flask_login.fresh_login_required
     def get(self):
         return render_template('selfdestruct.html', form=SelfDestructForm())
 
-    @flask_login.login_required
+    @flask_login.fresh_login_required
     def post(self):
         form = SelfDestructForm()
         if not form.validate_on_submit():

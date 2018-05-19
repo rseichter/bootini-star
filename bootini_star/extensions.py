@@ -7,7 +7,6 @@ import logging
 
 import flask_login
 import passlib.context
-import pymongo
 
 logging.basicConfig(level=logging.WARNING, format='%(asctime)s %(message)s')
 log = logging.getLogger('bootini_star')
@@ -16,6 +15,6 @@ app_config = {}
 
 login_manager = flask_login.LoginManager()
 
-db = None
+# db = None
 
 pwd_context = passlib.context.CryptContext(schemes=["pbkdf2_sha256"])
