@@ -5,6 +5,7 @@ __author__ = 'Ralph Seichter'
 
 import enum
 import re
+from urllib.parse import urlparse
 
 import flask_login
 import pymongo
@@ -27,7 +28,7 @@ class UserLevel(enum.IntEnum):
 def init_mongodb():
     global db
     db_uri = app_config['MONGODB_URI']
-    match = re.search(r'/(\w+)$', db_uri)
+    match = re.search(r'/(\w+)$', urlparse(db_uri).path)
     db_client = pymongo.MongoClient(db_uri)
     db = db_client.get_database(match[1])
 
