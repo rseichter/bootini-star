@@ -80,7 +80,7 @@ def refresh_token(api, character: Character):
     rt = es.refresh_token()
     if rt.token_changed:
         log.debug(f'Updating token for character {character.eve_id}')
-        character.token(rt.token)
+        character.token = rt.token
         character.modified_at = datetime.datetime.utcnow()
         if current_user.update() != 1:
             log.error(
