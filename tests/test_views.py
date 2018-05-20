@@ -13,7 +13,7 @@ from bootini_star import account_views, app, forms
 from bootini_star.account_views import InvalidUsageError, SIGNUP_FAILED
 from bootini_star.extensions import app_config
 from bootini_star.forms import CREATE_INDEXES
-from bootini_star.models import User, UserLevel, load_user
+from bootini_star.models import User, UserLevel, user_loader
 from .base import Character, TestCase
 from .base import activation_token, password, password2, password3
 from .base import character_id, character_name
@@ -248,7 +248,7 @@ class AllViews(TestCase):
 
     def test_load_unknown_user(self):
         with app.app_context():
-            self.assertIsNone(load_user(email2))
+            self.assertIsNone(user_loader(email2))
 
     def test_dashboard(self):
         add_user2()

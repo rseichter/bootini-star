@@ -5,6 +5,7 @@ __author__ = 'Ralph Seichter'
 
 import enum
 import re
+from typing import Optional
 from urllib.parse import urlparse
 
 import flask_login
@@ -23,7 +24,7 @@ class UserLevel(enum.IntEnum):
     INACTIVE = 0
     REGISTERED = 1
     DEFAULT = 2
-    ADMIN = 100
+    ADMIN = 10
 
 
 def init_mongodb():
@@ -72,7 +73,7 @@ class MongoDocument:
         self.add_field(MongoField('_id', str))
 
     def __hash__(self) -> int:
-        return hash(self.get_field_value('_id'))
+        return hash(self.mongo_id)
 
     def __eq__(self, other):
         if isinstance(self, other.__class__):
@@ -88,6 +89,10 @@ class MongoDocument:
     def set_field_value(self, field_name, value):
         field: MongoField = self._field_dict[field_name]
         field.value = value
+
+    @property
+    def mongo_id(self):
+        return self.get_field_value('_id')
 
     def to_mongo(self) -> dict:
         result = {'_class': self.__class__.__name__}
@@ -226,10 +231,10 @@ class User(MongoDocument, flask_login.UserMixin):
         return self.level >= UserLevel.ADMIN
 
     def get_id(self):
-        """Use email as ID (method required by Flask-Login)."""
+        """Method required by Flask-Login."""
         return self.email
 
-    def load_character(self, eve_id: int):
+    def get_character(self, eve_id: int) -> Optional[Character]:
         _list = self.characters
         if _list:
             for character in _list:
@@ -243,7 +248,7 @@ class User(MongoDocument, flask_login.UserMixin):
                                character.eve_id != eve_id]
 
 
-def activate_user(email: str, token: str) -> User:
+def activate_user(email: str, token: str) -> int:
     log.debug(f'activate_user {email} {token}')
     r: UpdateResult = User().collection.update_one(
         {'email': email, 'activation_token': token},
@@ -253,14 +258,14 @@ def activate_user(email: str, token: str) -> User:
     return r.modified_count
 
 
-def delete_user(email: str) -> User:
+def delete_user(email: str) -> int:
     log.debug(f'delete_user {email}')
     r: DeleteResult = User().collection.delete_one({'email': email})
     return r.deleted_count
 
 
 @login_manager.user_loader
-def load_user(email: str) -> User:
+def user_loader(email: str) -> Optional[User]:
     log.debug(f'load_user {email}')
     user = User()
     data = user.collection.find_one({'email': email})
@@ -271,7 +276,7 @@ def load_user(email: str) -> User:
 
 
 @login_manager.request_loader
-def request_loader(request, min_level: UserLevel = UserLevel.DEFAULT):
+def request_loader(request, min_level=UserLevel.DEFAULT) -> Optional[User]:
     log.debug(f'request_loader {request}')
     email = request.form.get('email')
     password = request.form.get('password')

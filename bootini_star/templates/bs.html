@@ -36,6 +36,10 @@
                     <a class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
                        aria-expanded="false">Settings</a>
                     <div class="dropdown-menu dropdown-menu-right">
+                        {% if current_user.is_admin %}
+                            <a class="dropdown-item" href="{{ url_for('bs.admin') }}">Admin page</a>
+                            <div class="dropdown-divider"></div>
+                        {% endif %}
                         <a class="dropdown-item" href="{{ url_for('bs.password') }}">Change password</a>
                         <a class="dropdown-item" href="{{ url_for('bs.selfdestruct') }}">Delete account</a>
                         <div class="dropdown-divider"></div>

@@ -110,7 +110,7 @@ class MailList(MethodView):
 
     @flask_login.login_required
     def get(self, character_id, label=None):
-        cc = current_user.load_character(character_id)
+        cc = current_user.get_character(character_id)
         if cc:  # pragma: no cover (Needs live character)
             api = mail_api(cc)
             kwargs = {'labels': [label]} if isinstance(label, int) else {}
@@ -136,7 +136,7 @@ class Mail(MethodView):
 
     @flask_login.login_required
     def get(self, character_id: int, mail_id: int):
-        cc = current_user.load_character(character_id)
+        cc = current_user.get_character(character_id)
         if cc:
             api = mail_api(cc)
             try:
@@ -159,7 +159,7 @@ class MarkMailRead(MethodView):
 
     @flask_login.login_required
     def get(self, character_id: int, mail_id: int, read: int):
-        cc = current_user.load_character(character_id)
+        cc = current_user.get_character(character_id)
         if cc:  # pragma: no cover (Needs live character)
             api = mail_api(cc)
             try:
@@ -179,7 +179,7 @@ class RemoveMail(MethodView):
 
     @flask_login.login_required
     def get(self, character_id: int, mail_id: int):
-        cc = current_user.load_character(character_id)
+        cc = current_user.get_character(character_id)
         if cc:  # pragma: no cover (Needs live character)
             api = mail_api(cc)
             try:
@@ -219,7 +219,7 @@ class Skills(MethodView):
 
     @flask_login.login_required
     def get(self, character_id):
-        cc = current_user.load_character(character_id)
+        cc = current_user.get_character(character_id)
         if cc:  # pragma: no cover (Needs live character)
             api = skills_api(cc)
             try:

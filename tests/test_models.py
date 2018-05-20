@@ -8,7 +8,7 @@ import unittest
 import pymongo
 
 from bootini_star.extensions import pwd_context
-from bootini_star.models import Character, User, load_user
+from bootini_star.models import Character, User, user_loader
 
 EMAIL = 'tim@buster.net'
 EMAIL2 = 'fred@flint.org'
@@ -70,7 +70,7 @@ class MongoDocumentTests(unittest.TestCase):
         u.characters = [c1, c2]
         self.assertIsNotNone(u.insert())
 
-        u2 = load_user(EMAIL2)
+        u2 = user_loader(EMAIL2)
         self.assertTrue(isinstance(u2, User))
 
 

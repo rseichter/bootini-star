@@ -146,3 +146,21 @@ flask run
 After Flask startup is complete, you should be able to open the application via
 [http://127.0.0.1:5000](http://127.0.0.1:5000) in your web browser, if you have
 kept Flask's default server and port settings.
+
+## Admin privileges
+
+As a security measure, admin privileges can only be granted by setting the user
+level directly on the database level. After signing up in the application, use
+the following MongoDB shell command:
+
+```shell
+mongo bs --eval 'db.users.updateOne({email: "you@your.domain"}, {$set: {level: 10}})'
+```
+You should see the following result:
+```shell
+{ "acknowledged" : true, "matchedCount" : 1, "modifiedCount" : 0 }
+```
+
+After logging in, you should now see an "Admin page" entry in the settings
+menu. Use this page to create the DB indexes. That concludes the Bootini Star
+configuration.
