@@ -59,7 +59,7 @@ class Signup(MethodView):
 
     @staticmethod
     def get():
-        return render_template('quickform.html', form=SignupForm())
+        return render_template('signup.html', form=SignupForm())
 
     # noinspection PyTypeChecker
     @staticmethod
@@ -67,7 +67,7 @@ class Signup(MethodView):
         form = SignupForm()
         if not form.validate_on_submit():
             flash_form_errors(form)
-            return render_template('quickform.html', form=form)
+            return render_template('signup.html', form=form)
         email = form.email.data.strip()
         password = form.password.data
         user = User()

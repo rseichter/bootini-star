@@ -1,0 +1,15 @@
+{% extends "bs.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block bscontent %}
+    <div class="row justify-content-md-center">
+        <p class="w-75">By filling out this account registration form you consent to all entered data being stored
+            in a database, either verbatim or in hashed form in the case of passwords. You also agree to receive an
+            <em>activation email</em> and, possibly, future emails related to this site. Using this website is free
+            of charge, and you can delete your account at any time. The maintainer of this site reserves the right
+            to refuse individual signups and/or delete individual accounts at any time, without explanation or
+            notification.</p>
+    </div>
+    <div class="row justify-content-md-center">
+        {{ wtf.quick_form(form) }}
+    </div>
+{% endblock %}
