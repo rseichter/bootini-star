@@ -142,11 +142,9 @@ class Mail(MethodView):
             try:
                 rv = api.get_characters_character_id_mail_mail_id(
                     character_id, mail_id)
-                # Include mail object dump for admins only
-                what = vars(rv) if current_user.is_admin else None
                 return render_template('mail.html', character_id=character_id,
                                        mail_id=mail_id, eveCache=eveCache,
-                                       mail=rv, what=what)
+                                       mail=rv)
             except ApiException as e:
                 return api_fail(e)
         else:

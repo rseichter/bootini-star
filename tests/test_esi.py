@@ -86,7 +86,7 @@ class ESI(TestCase):
     def test_get_universe_regions(self):
         api = swagger_client.UniverseApi()
         resp = api.get_universe_regions(user_agent=user_agent, async=False)
-        self.assertEqual(len(resp), 100)
+        self.assertEqual(len(resp), 105)
 
     @skipUnlessOnline
     def test_get_characters_character_id(self):
