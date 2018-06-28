@@ -144,8 +144,13 @@ class IdNameCache(CacheBase):
             return ce
         api = CharacterApi()
         log.debug(f'Querying ESI for character {char_id}')
-        rv = api.get_characters_character_id(char_id)
-        return self.add(char_id, rv.name)
+        try:
+            rv = api.get_characters_character_id(char_id)
+            return self.add(char_id, rv.name)
+        except Exception as e:
+            log.error(f'Looking up character {char_id} failed: {e}')
+        return None
+
 
     def eve_characters(self, char_ids: Set[int]) -> Set[Cache]:
         """
@@ -164,8 +169,11 @@ class IdNameCache(CacheBase):
                 unknown.append(char_id)
         if unknown:
             log.debug(f'Querying ESI for characters {unknown}')
-            for c in CharacterApi().get_characters_names(unknown):
-                characters.add(self.add(c.character_id, c.character_name))
+            try:
+                for c in CharacterApi().get_characters_names(unknown):
+                    characters.add(self.add(c.character_id, c.character_name))
+            except Exception as e:
+                log.error(f'Looking up characters {unknown} failed: {e}')
         return characters
 
     @staticmethod
